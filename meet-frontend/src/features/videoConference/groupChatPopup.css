@@ -1,0 +1,352 @@
+/* Group chat popup — ported from avnik_old join (custom-style.css), scoped to meeting shell */
+
+.video-conference .wb-chat-popup-root {
+  position: absolute;
+  right: 16px;
+  bottom: 72px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.video-conference .wb-chat-popup-root--open {
+  pointer-events: auto;
+}
+
+.video-conference .wb-chat-popup-root .WB-chat-popup-sec {
+  background: #ffffff;
+  border-radius: 15px 30px;
+  box-shadow: 1px 1px 100px 2px rgb(0 0 0 / 22%);
+  height: 347px;
+  width: 400px;
+  max-width: calc(100vw - 32px);
+  border: 0;
+  position: relative;
+  pointer-events: auto;
+}
+
+.video-conference .wb-chat-popup-root .WB-chat-popup {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Single top bar: title + actions (matches reference layout) */
+.video-conference .wb-chat-popup-root .wb-chat-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 15px;
+  background-color: #145388;
+  border-radius: 15px 15px 0 0;
+  flex-shrink: 0;
+}
+
+.video-conference .wb-chat-popup-root .wb-chat-popup__header-title {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  width: auto;
+  background: transparent;
+  border-radius: 0;
+  float: none;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  float: none;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li + li {
+  margin-left: 10px;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li .wb-chat-popup__pill {
+  background: #ffffff;
+  border-radius: 30px;
+  box-shadow: 0 5px 15px rgb(0 0 0 / 10%);
+  height: 40px;
+  line-height: 40px;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #145388;
+  box-sizing: border-box;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li .wb-chat-popup__pill i {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li a,
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li button {
+  background: #ffffff;
+  border: none;
+  border-radius: 30px;
+  box-shadow: 0 5px 15px rgb(0 0 0 / 10%);
+  height: 40px;
+  line-height: 40px;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  width: 40px;
+  font-size: 14px;
+  color: #333333;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li a:hover,
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li button:hover {
+  color: #145388;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li.active a,
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li.active button {
+  color: #145388;
+}
+
+.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li i {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.video-conference .wb-chat-popup-root .group_chat_popup_sec {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.video-conference .wb-chat-popup-root .group_chat_popup_sec .chat-rbox {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.video-conference .wb-chat-popup-root .group_chat_popup_sec .message_box_scroll {
+  height: 100%;
+  margin: 0;
+  padding: 8px 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.video-conference .wb-chat-popup-root .group-chat-pop-footer {
+  padding: 10px 10px 0 10px;
+  flex-shrink: 0;
+}
+
+.video-conference .wb-chat-popup-root .group-messages-footer {
+  border-top: 0;
+  bottom: 0;
+  display: table;
+  position: relative;
+  width: 100%;
+  background-color: #ebebeb;
+  border-radius: 30px;
+  padding: 9px 15px;
+  box-sizing: border-box;
+}
+
+.video-conference .wb-chat-popup-root .group-messages-footer:after {
+  position: absolute;
+  content: '';
+  background-color: #145388;
+  height: 44px;
+  width: 40px;
+  right: 0;
+  top: 0;
+  border-radius: 0 25px 25px 0;
+  z-index: 0;
+}
+
+.video-conference .wb-chat-popup-root .popup-messages-footer {
+  display: table-cell;
+  vertical-align: middle;
+  width: 78%;
+}
+
+.video-conference .wb-chat-popup-root .popup-messages-footer textarea.chat-pop-input {
+  border: 0;
+  font-size: 12px;
+  height: 27px;
+  min-height: 27px;
+  max-height: 80px;
+  margin: 0;
+  padding: 0;
+  line-height: 14px;
+  overflow-y: auto;
+  resize: none;
+  width: 96%;
+  background-color: transparent;
+  position: relative;
+  top: 0;
+  vertical-align: top;
+  padding-right: 8px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.video-conference .wb-chat-popup-root .popup-messages-footer textarea.chat-pop-input::placeholder {
+  color: #9ca3af;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance {
+  display: table-cell;
+  vertical-align: middle;
+  width: 22%;
+  position: relative;
+  top: 2px;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  justify-content: flex-end;
+  list-style: none;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li {
+  list-style: none;
+  float: none;
+  padding-left: 0;
+  padding-right: 8px;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li:last-child {
+  padding-right: 0;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li button,
+.video-conference .wb-chat-popup-root .group-message-advance li .fileUpload i {
+  font-size: 20px;
+  color: #000000;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li .fileUpload i {
+  font-size: 24px;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li button:hover,
+.video-conference .wb-chat-popup-root .group-message-advance li .fileUpload:hover i {
+  color: #145388;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+  color: #d7d6d6;
+  position: relative;
+  z-index: 9;
+  font-size: 16px;
+  right: -1px;
+  top: -4px;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li button.send-message-btn {
+  color: #ffffff;
+  font-size: 15px;
+  right: -6px;
+  top: -3px;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li button.send-message-btn .mr-send-icon {
+  color: #ffffff;
+}
+
+.video-conference .wb-chat-popup-root .group-message-advance li .fileUpload:hover i {
+  color: #ffffff;
+}
+
+.video-conference .wb-chat-popup-root .fileUpload {
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.video-conference .wb-chat-popup-root .fileUpload input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video-conference .wb-chat-popup-root .smiley-btn {
+  min-width: 8px;
+}
+
+/* Local message rows */
+.video-conference .wb-chat-popup-root .wb-chat-msg {
+  padding: 6px 15px;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.video-conference .wb-chat-popup-root .wb-chat-msg--self {
+  text-align: right;
+  color: #145388;
+  font-weight: 500;
+}
+
+@media (max-width: 480px) {
+  .video-conference .wb-chat-popup-root {
+    right: 8px;
+    bottom: 68px;
+  }
+
+  .video-conference .wb-chat-popup-root .WB-chat-popup-sec {
+    width: min(400px, calc(100vw - 16px));
+  }
+}

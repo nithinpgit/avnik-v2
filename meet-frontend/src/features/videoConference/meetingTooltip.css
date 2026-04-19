@@ -1,0 +1,109 @@
+/**
+ * Cooltipz-style tooltips (join app: cooltipz.css vars #145388 / #fff).
+ * Scoped to meeting UI only — not loaded on Excalidraw whiteboard surface.
+ */
+:is(.video-conference, .pre-meeting-modal) {
+  --meeting-tooltip-bg: #145388;
+  --meeting-tooltip-fg: #ffffff;
+  --meeting-tooltip-arrow: 5px;
+  --meeting-tooltip-timing: 120ms;
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip {
+  position: relative;
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  z-index: 1200;
+  background-color: var(--meeting-tooltip-bg);
+  border-radius: 5px;
+  box-shadow: 0 5px 15px rgb(0 0 0 / 10%);
+  color: var(--meeting-tooltip-fg);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: normal;
+  padding: 5px 7px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--meeting-tooltip-timing) ease-out;
+  -webkit-font-smoothing: antialiased;
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip::before {
+  content: '';
+  position: absolute;
+  z-index: 1201;
+  width: 0;
+  height: 0;
+  border: var(--meeting-tooltip-arrow) solid transparent;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--meeting-tooltip-timing) ease-out;
+}
+
+/* Tooltip below control (top bar) — arrow points up */
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom::after {
+  left: 50%;
+  top: calc(100% + calc(var(--meeting-tooltip-arrow) * 2) - 2px);
+  transform: translate(-50%, 4px);
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom::before {
+  left: 50%;
+  top: calc(100% - 1px);
+  transform: translate(-50%, 0);
+  border-bottom-color: var(--meeting-tooltip-bg);
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom:hover::after,
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom:focus-visible::after,
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom:hover::before,
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom:focus-visible::before {
+  opacity: 1;
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom:hover::after,
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
+/* Tooltip above control (dock, FAB) — arrow points down */
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top::after {
+  left: 50%;
+  bottom: calc(100% + calc(var(--meeting-tooltip-arrow) * 2) - 2px);
+  transform: translate(-50%, -4px);
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top::before {
+  left: 50%;
+  bottom: calc(100% - 1px);
+  transform: translate(-50%, 0);
+  border-top-color: var(--meeting-tooltip-bg);
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top:hover::after,
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top:focus-visible::after,
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top:hover::before,
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top:focus-visible::before {
+  opacity: 1;
+}
+
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top:hover::after,
+:is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.video-conference, .pre-meeting-modal) .meeting-tooltip::after,
+  :is(.video-conference, .pre-meeting-modal) .meeting-tooltip::before {
+    transition: none;
+  }
+
+  :is(.video-conference, .pre-meeting-modal) .meeting-tooltip--bottom::after,
+  :is(.video-conference, .pre-meeting-modal) .meeting-tooltip--top::after {
+    transform: translate(-50%, 0);
+  }
+}

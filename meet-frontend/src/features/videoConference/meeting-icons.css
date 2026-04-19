@@ -1,0 +1,498 @@
+@font-face {
+  font-family: 'avnik';
+  src:
+    url('/vendor/meeting-icons/fonts/avnik.woff2?1xqgde') format('woff2'),
+    url('/vendor/meeting-icons/fonts/avnik.ttf?1xqgde') format('truetype'),
+    url('/vendor/meeting-icons/fonts/avnik.woff?1xqgde') format('woff'),
+    url('/vendor/meeting-icons/fonts/avnik.svg?1xqgde#avnik') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'liberate-meet-icons';
+  src:
+    url('/vendor/meeting-icons/fonts/liberate-meet-icons.ttf?jo60bh') format('truetype'),
+    url('/vendor/meeting-icons/fonts/liberate-meet-icons.woff?jo60bh') format('woff'),
+    url('/vendor/meeting-icons/fonts/liberate-meet-icons.svg?jo60bh#liberate-meet-icons') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+/* Scoped under .video-conference and .pre-meeting-modal — no global `i` rule (protects Excalidraw). */
+
+:is(.video-conference, .pre-meeting-modal) i[class^='mr-'],
+:is(.video-conference, .pre-meeting-modal) i[class*=' mr-'] {
+  font-family: 'avnik' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:is(.video-conference, .pre-meeting-modal) i.lm {
+  font-family: 'liberate-meet-icons' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:is(.video-conference, .pre-meeting-modal) .mr-webinar1-icon:before {
+  content: "\e952";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-appointments-icon:before {
+  content: "\e953";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-Meet-icon:before {
+  content: "\e954";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-ongoing-icon:before {
+  content: "\e955";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-traning-icon:before {
+  content: "\e956";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-sound-mute-icon:before {
+  content: "\e92c";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-sound-unmute-icon:before {
+  content: "\e951";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-Logo-icon:before {
+  content: "\e950";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-document-off-icon:before {
+  content: "\e94d";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-share-off-icon:before {
+  content: "\e94e";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-video-off-icon:before {
+  content: "\e94f";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-add-card-icon:before {
+  content: "\e900";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-all-mic-off-icon:before {
+  content: "\e901";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-all-mic-on-icon:before {
+  content: "\e902";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-all-webcam-off-icon:before {
+  content: "\e903";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-all-webcam-on-icon:before {
+  content: "\e904";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-attachment-icon:before {
+  content: "\e905";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-attended-icon:before {
+  content: "\e906";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-audio-output-icon:before {
+  content: "\e907";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-back-icon:before {
+  content: "\e908";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-chat-icon:before {
+  content: "\e909";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-choose-color-icon:before {
+  content: "\e90a";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-clear-all-icon:before {
+  content: "\e90b";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-close-icon:before {
+  content: "\e90c";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-closed-caption-icon:before {
+  content: "\e90d";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-dashed-line-icon:before {
+  content: "\e90e";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-delete-icon:before {
+  content: "\e90f";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-desktop-view-icon:before {
+  content: "\e910";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-document-share-icon:before {
+  content: "\e911";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-dollar-icon:before {
+  content: "\e912";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-download-icon:before {
+  content: "\e913";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-dropdown-icon:before {
+  content: "\e914";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-ellipse-icon:before {
+  content: "\e915";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-emoji-icon:before {
+  content: "\e916";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-end-icon:before {
+  content: "\e917";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-end-meeting-icon:before {
+  content: "\e918";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-eraser-icon:before {
+  content: "\e919";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-event-cost-icon:before {
+  content: "\e91a";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-exit-full-screen-icon:before {
+  content: "\e91b";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-exit-user-icon:before {
+  content: "\e91c";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-faq-icon:before {
+  content: "\e91d";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-file-ext-icon:before {
+  content: "\e91e";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-file-jpg-icon:before {
+  content: "\e91f";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-file-upload-icon:before {
+  content: "\e920";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-flip-dropdown-icon:before {
+  content: "\e921";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-full-screen-icon:before {
+  content: "\e922";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-grid-view-icon:before {
+  content: "\e923";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-group-chat-icon:before {
+  content: "\e924";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-help-icon:before {
+  content: "\e925";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-horizontal-more-icon:before {
+  content: "\e926";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-host-popup-icon:before {
+  content: "\e927";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-image-icon:before {
+  content: "\e928";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-invite-icon:before {
+  content: "\e929";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-left-page-icon:before {
+  content: "\e92a";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-list-view-icon:before {
+  content: "\e92b";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-mic-off-icon:before {
+  content: "\e92d";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-mic-on-icon:before {
+  content: "\e92e";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-notification-icon:before {
+  content: "\e92f";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-on-cost-icon:before {
+  content: "\e930";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-pause-timer-icon:before {
+  content: "\e931";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-pencil-icon:before {
+  content: "\e932";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-pointer-icon:before {
+  content: "\e933";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-present-icon:before {
+  content: "\e934";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-rectangle-icon:before {
+  content: "\e935";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-redo-icon:before {
+  content: "\e936";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-right-page-icon:before {
+  content: "\e937";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-screen-share-icon:before {
+  content: "\e938";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-search-icon:before {
+  content: "\e939";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-seats-icon:before {
+  content: "\e93a";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-send-icon:before {
+  content: "\e93b";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-setting-icon:before {
+  content: "\e93c";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-share-icon:before {
+  content: "\e93d";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-solid-line-icon:before {
+  content: "\e93e";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-star-rating-icon:before {
+  content: "\e93f";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-start-timer-icon:before {
+  content: "\e940";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-text-icon:before {
+  content: "\e941";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-undo-icon:before {
+  content: "\e942";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-user-chat-icon:before {
+  content: "\e943";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-vertical-more-icon:before {
+  content: "\e944";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-video-share-icon:before {
+  content: "\e945";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-video-upload-icon:before {
+  content: "\e946";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-voice-icon:before {
+  content: "\e947";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-webcam-off-icon:before {
+  content: "\e948";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-webcam-on-icon:before {
+  content: "\e949";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-webinar-icon:before {
+  content: "\e94a";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-zoom-in-icon:before {
+  content: "\e94b";
+}
+:is(.video-conference, .pre-meeting-modal) .mr-zoom-out-icon:before {
+  content: "\e94c";
+}
+.video-conference .lm-rectangle1-icon:before {
+  content: "\e93d";
+}
+.video-conference .lm-add-card-icon:before {
+  content: "\e900";
+}
+.video-conference .lm-all-mic-off-icon:before {
+  content: "\e901";
+}
+.video-conference .lm-all-mic-on-icon:before {
+  content: "\e902";
+}
+.video-conference .lm-all-webcam-off-icon:before {
+  content: "\e903";
+}
+.video-conference .lm-all-webcam-on-icon:before {
+  content: "\e904";
+}
+.video-conference .lm-arrow-icon:before {
+  content: "\e905";
+}
+.video-conference .lm-back-icon:before {
+  content: "\e906";
+}
+.video-conference .lm-chat-icon:before {
+  content: "\e907";
+}
+.video-conference .lm-choose-color-icon:before {
+  content: "\e908";
+}
+.video-conference .lm-clear-all-icon:before {
+  content: "\e909";
+}
+.video-conference .lm-close-icon:before {
+  content: "\e90a";
+}
+.video-conference .lm-closed-caption-icon:before {
+  content: "\e90b";
+}
+.video-conference .lm-dashed-line-icon:before {
+  content: "\e90c";
+}
+.video-conference .lm-delete-icon:before {
+  content: "\e90d";
+}
+.video-conference .lm-desktop-view-icon:before {
+  content: "\e90e";
+}
+.video-conference .lm-dollar-icon:before {
+  content: "\e90f";
+}
+.video-conference .lm-download-icon:before {
+  content: "\e910";
+}
+.video-conference .lm-dropdown-icon:before {
+  content: "\e911";
+}
+.video-conference .lm-ellipse-icon:before {
+  content: "\e912";
+}
+.video-conference .lm-emoji-icon:before {
+  content: "\e913";
+}
+.video-conference .lm-end-icon:before {
+  content: "\e914";
+}
+.video-conference .lm-eraser-icon:before {
+  content: "\e915";
+}
+.video-conference .lm-exit-full-screen-icon:before {
+  content: "\e916";
+}
+.video-conference .lm-exit-user-icon:before {
+  content: "\e917";
+}
+.video-conference .lm-flip-dropdown-icon:before {
+  content: "\e918";
+}
+.video-conference .lm-full-screen-icon:before {
+  content: "\e919";
+}
+.video-conference .lm-Group-557-icon:before {
+  content: "\e91a";
+}
+.video-conference .lm-horizontal-more-icon:before {
+  content: "\e91b";
+}
+.video-conference .lm-image-icon:before {
+  content: "\e91c";
+}
+.video-conference .lm-invite-icon:before {
+  content: "\e91d";
+}
+.video-conference .lm-left-arrow-icon:before {
+  content: "\e91e";
+}
+.video-conference .lm-left-page-icon:before {
+  content: "\e91f";
+}
+.video-conference .lm-left-tool-icon:before {
+  content: "\e920";
+}
+.video-conference .lm-left-tool-1-icon:before {
+  content: "\e921";
+}
+.video-conference .lm-link-icon:before {
+  content: "\e922";
+}
+.video-conference .lm-logo-icon:before {
+  content: "\e923";
+}
+.video-conference .lm-meeting-start-icon:before {
+  content: "\e924";
+}
+.video-conference .lm-menu-icon:before {
+  content: "\e925";
+}
+.video-conference .lm-mic-off-icon:before {
+  content: "\e926";
+}
+.video-conference .lm-mic-on-icon:before {
+  content: "\e927";
+}
+.video-conference .lm-notification-icon:before {
+  content: "\e928";
+}
+.video-conference .lm-on-cost-icon:before {
+  content: "\e929";
+}
+.video-conference .lm-pencil-icon:before {
+  content: "\e92a";
+}
+.video-conference .lm-pointer-icon:before {
+  content: "\e92b";
+}
+.video-conference .lm-present-icon:before {
+  content: "\e92c";
+}
+.video-conference .lm-rectangle-icon:before {
+  content: "\e92d";
+}
+.video-conference .lm-redo-icon:before {
+  content: "\e92e";
+}
+.video-conference .lm-right-arrow-icon:before {
+  content: "\e92f";
+}
+.video-conference .lm-right-page-icon:before {
+  content: "\e930";
+}
+.video-conference .lm-screen-share-icon:before {
+  content: "\e931";
+}
+.video-conference .lm-search-icon:before {
+  content: "\e932";
+}
+.video-conference .lm-send-icon:before {
+  content: "\e933";
+}
+.video-conference .lm-solid-line-icon:before {
+  content: "\e934";
+}
+.video-conference .lm-sound-waves-icon:before {
+  content: "\e935";
+}
+.video-conference .lm-text-icon:before {
+  content: "\e936";
+}
+.video-conference .lm-undo-icon:before {
+  content: "\e937";
+}
+.video-conference .lm-vertical-more-icon:before {
+  content: "\e938";
+}
+.video-conference .lm-webcam-off-icon:before {
+  content: "\e939";
+}
+.video-conference .lm-webcam-on-icon:before {
+  content: "\e93a";
+}
+.video-conference .lm-zoom-in-icon:before {
+  content: "\e93b";
+}
+.video-conference .lm-zoom-out-icon:before {
+  content: "\e93c";
+}
+
+

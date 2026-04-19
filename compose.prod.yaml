@@ -1,0 +1,40 @@
+# Production: from repo root run `docker compose -f compose.prod.yaml up --build`
+# Frontend nginx serves the SPA and proxies /api and /socket.io to the API container.
+# Terminate TLS at your edge reverse proxy (e.g. Traefik, Caddy, cloud LB) in front of the published HTTP port.
+name: avnik-meeting-prod
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: meet-redis-prod
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - meet_redis_data_prod:/data
+
+  meet-backend:
+    build:
+      context: ./meet-backend
+      dockerfile: Dockerfile
+    container_name: meet-backend-prod
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      REDIS_URL: redis://redis:6379
+    expose:
+      - "3000"
+    depends_on:
+      - redis
+
+  meet-frontend:
+    build:
+      context: ./meet-frontend
+      dockerfile: Dockerfile
+    container_name: meet-frontend-prod
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    depends_on:
+      - meet-backend
+
+volumes:
+  meet_redis_data_prod:

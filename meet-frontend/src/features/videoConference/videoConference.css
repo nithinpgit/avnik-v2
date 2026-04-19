@@ -1,0 +1,660 @@
+.video-conference {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.meeting-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  pointer-events: auto;
+  z-index: 30;
+}
+
+.meeting-topbar__left,
+.meeting-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.meeting-topbar__brand {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #145388;
+  text-transform: lowercase;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.meeting-time {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #333333;
+  padding: 0 4px;
+  min-width: 64px;
+  text-align: center;
+}
+
+/* Legacy-style square controls (see avnik_old .cmn-cricle-btn + theme) */
+.cmn-cricle-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid #d8dee8;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #333333;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.cmn-cricle-btn:hover {
+  border-color: #a8bdd4;
+  box-shadow: 0 6px 18px rgba(20, 83, 136, 0.12);
+  color: #145388;
+}
+
+.cmn-cricle-btn:focus-visible {
+  outline: 2px solid #426de5;
+  outline-offset: 2px;
+}
+
+.cmn-cricle-btn__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.cmn-cricle-btn__icon--record {
+  color: #db2727;
+}
+
+/* Keep recording control red on hover (do not use default blue icon hover). */
+.cmn-cricle-btn--record-dot:hover {
+  color: #db2727;
+}
+
+.cmn-cricle-btn__icon--glyph {
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.cmn-cricle-btn--exit {
+  color: #db2727;
+  border: 2px solid #db2727;
+  box-shadow: none;
+}
+
+.cmn-cricle-btn--exit:hover {
+  background: #fff5f5;
+  border-color: #b70000;
+  color: #b70000;
+}
+
+.cmn-cricle-btn--active {
+  background: #145388;
+  border-color: #145388;
+  color: #ffffff;
+}
+
+.cmn-cricle-btn--active:hover {
+  background: #114670;
+  border-color: #114670;
+  color: #ffffff;
+}
+
+/* Active toggle keeps white glyphs; do not turn blue on hover */
+.cmn-cricle-btn--active:hover .cmn-cricle-btn__icon {
+  color: #ffffff;
+}
+
+.cmn-cricle-btn--notify {
+  overflow: visible;
+}
+
+.notify-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 50%;
+  background: #e8deff;
+  color: #145388;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.meeting-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.video-sidebar {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: 260px;
+  height: calc(100% - 112px);
+  background: #ffffff;
+  border-left: 1px solid #dce1e6;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  box-shadow: -4px 0 24px rgba(15, 23, 42, 0.06);
+}
+
+.video-sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #2f3948;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.video-sidebar__search {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #d8dee8;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #333333;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.video-sidebar__search:hover {
+  color: #145388;
+}
+
+.video-sidebar__tiles {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 10px;
+}
+
+.video-stage {
+  position: absolute;
+  top: 82px;
+  left: 24px;
+  right: 24px;
+  bottom: 88px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  pointer-events: auto;
+}
+
+@keyframes video-tile-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* overflow visible so the ⋮ menu can extend past the tile; clip video inside __media only */
+.video-tile {
+  position: relative;
+  z-index: 0;
+  min-height: 250px;
+  border-radius: 10px;
+  border: 1px solid rgba(30, 40, 54, 0.45);
+  overflow: visible;
+  background: #0f1419;
+  box-shadow:
+    0 4px 14px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.video-tile:has(.video-tile__menu-dropdown--open) {
+  z-index: 8;
+}
+
+.video-tile--animated {
+  animation: video-tile-enter 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.normal .video-tile {
+  min-height: 128px;
+  aspect-ratio: 16 / 10;
+}
+
+.video-tile__media {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background: #0c0f14;
+}
+
+.video-tile__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  z-index: 1;
+}
+
+.video-tile__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(160deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.98) 100%),
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(100, 116, 139, 0.35), transparent);
+  transition: opacity 0.35s ease;
+}
+
+.video-tile__fallback--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.video-tile__status-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.video-tile__status-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+  text-align: center;
+  line-height: 1.35;
+  max-width: 11rem;
+}
+
+.video-tile__chrome {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 6px 0;
+  pointer-events: none;
+}
+
+.video-tile__more {
+  pointer-events: auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.45);
+  color: #f8fafc;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.video-tile__more:hover {
+  background: rgba(20, 83, 136, 0.65);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.video-tile__more:active {
+  transform: scale(0.96);
+}
+
+.video-tile__more[aria-expanded='true'] {
+  background: rgba(20, 83, 136, 0.85);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.video-tile__menu-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 6px;
+  z-index: 20;
+  min-width: 158px;
+  padding: 6px 0;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.18),
+    0 2px 8px rgba(15, 23, 42, 0.08);
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+  transform-origin: top right;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.22s;
+}
+
+.video-tile__menu-dropdown--open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+  visibility: visible;
+  transition:
+    opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+.video-tile__menu-item {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.video-tile__menu-item:hover {
+  background: #f1f5f9;
+  color: #145388;
+}
+
+.video-tile__footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+  padding: 8px 10px 10px;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.82) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.video-tile__label {
+  display: inline-block;
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 4px 8px;
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Center bottom bar — similar to .meeting-tools-box / .m-t-o a */
+.meeting-bottom-dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 15px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 35;
+}
+
+.meeting-bottom-dock__inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.12);
+  pointer-events: auto;
+}
+
+.dock-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #333333;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.dock-btn:hover {
+  color: #145388;
+}
+
+.fab-corner {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #d8dee8;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #333333;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  transition:
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+  z-index: 36;
+}
+
+.fab-corner:hover {
+  color: #145388;
+  box-shadow: 0 6px 22px rgba(20, 83, 136, 0.2);
+}
+
+.fab-corner--help {
+  left: 16px;
+  bottom: 16px;
+}
+
+.fab-corner--chat {
+  right: 16px;
+  bottom: 16px;
+}
+
+.fab-corner--chat-active {
+  border-color: #145388;
+  color: #145388;
+  box-shadow: 0 4px 18px rgba(20, 83, 136, 0.25);
+}
+
+@media (max-width: 1199px) {
+  .video-sidebar {
+    width: 220px;
+  }
+
+  .video-stage {
+    left: 16px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 991px) {
+  .meeting-topbar {
+    padding: 6px 10px;
+    min-height: 48px;
+  }
+
+  .meeting-topbar__brand {
+    font-size: 18px;
+  }
+
+  .cmn-cricle-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .video-sidebar {
+    top: 48px;
+    width: 190px;
+    height: calc(100% - 108px);
+  }
+
+  .video-stage {
+    top: 58px;
+    left: 12px;
+    right: 12px;
+    bottom: 82px;
+    grid-template-columns: 1fr;
+  }
+
+  .meeting-bottom-dock__inner {
+    padding: 5px 8px;
+    gap: 2px;
+  }
+
+  .dock-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .fab-corner {
+    width: 36px;
+    height: 36px;
+  }
+
+  .fab-corner--help {
+    left: 10px;
+    bottom: 12px;
+  }
+
+  .fab-corner--chat {
+    right: 10px;
+    bottom: 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  .meeting-time {
+    width: 100%;
+    order: 10;
+    flex-basis: 100%;
+    text-align: left;
+    padding-left: 0;
+  }
+
+  .meeting-topbar__brand {
+    position: static;
+    transform: none;
+    flex-basis: 100%;
+    text-align: center;
+    order: -1;
+    margin-bottom: 4px;
+  }
+
+  .meeting-topbar {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .meeting-topbar__left,
+  .meeting-topbar__right {
+    justify-content: center;
+  }
+
+  .video-sidebar {
+    width: 160px;
+  }
+
+  .video-sidebar__tiles {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .normal .video-tile {
+    min-height: 95px;
+  }
+
+  .video-tile__menu-dropdown {
+    min-width: 140px;
+  }
+
+  .video-tile__menu-item {
+    font-size: 11px;
+    padding: 8px 12px;
+  }
+
+  .meeting-bottom-dock__inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: calc(100vw - 24px);
+  }
+}

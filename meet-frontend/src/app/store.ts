@@ -1,0 +1,28 @@
+import { configureStore } from '@reduxjs/toolkit'
+import meetingSessionReducer from '../features/meetingSession/meetingSessionSlice'
+import roomSyncReducer from '../features/roomSync/roomSyncSlice'
+import whiteboardReducer from '../features/whiteboard/whiteboardSlice'
+import preMeetingReducer from '../features/preMeeting/preMeetingSlice'
+import videoConferenceReducer from '../features/videoConference/videoConferenceSlice'
+
+export const store = configureStore({
+  reducer: {
+    whiteboard: whiteboardReducer,
+    preMeeting: preMeetingReducer,
+    meetingSession: meetingSessionReducer,
+    roomSync: roomSyncReducer,
+    videoConference: videoConferenceReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [
+          'videoConference/setLocalStream',
+        ],
+        ignoredPaths: ['videoConference.localStream', 'roomSync.channels'],
+      },
+    }),
+})
+
+export type RootState = ReturnType<typeof store.getState>
+export type AppDispatch = typeof store.dispatch
