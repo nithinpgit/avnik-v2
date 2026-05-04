@@ -20,6 +20,8 @@ import { resolveMeetingSocketUrl } from './socketUrl'
 
 export type MeetingSocketContextValue = {
   socket: Socket | null
+  /** True after first `room_snapshot` for this Socket.IO session (SFU can join). */
+  presenceJoined: boolean
   /** Emit a persisted room document update (same contract for whiteboard and future channels). */
   emitRoomSync: (channel: string, payload: unknown) => void
 }
@@ -47,6 +49,7 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
   const profileImage = useAppSelector(selectMeetingProfileImage)
 
   const [socket, setSocket] = useState<Socket | null>(null)
+  const [presenceJoined, setPresenceJoined] = useState(false)
   const socketRef = useRef<Socket | null>(null)
 
   const emitRoomSync = useCallback((channel: string, payload: unknown) => {
@@ -71,9 +74,11 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
     const client = baseUrl ? io(baseUrl, socketOptions) : io(socketOptions)
     socketRef.current = client
     setSocket(client)
+    setPresenceJoined(false)
 
     const onSnapshot = (payload: { roomId: string; peers: PeerDto[] }) => {
       dispatch(applyRoomSnapshot({ peers: payload.peers.map((p) => mapPeer(p)) }))
+      setPresenceJoined(true)
     }
 
     const onPeerJoined = (payload: { peer: PeerDto }) => {
@@ -125,13 +130,14 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       client.disconnect()
       socketRef.current = null
       setSocket(null)
+      setPresenceJoined(false)
       dispatch(resetRoomSync())
     }
   }, [entryCompleted, roomId, userId, displayName, role, profileImage, dispatch])
 
   const value = useMemo<MeetingSocketContextValue>(
-    () => ({ socket, emitRoomSync }),
-    [socket, emitRoomSync],
+    () => ({ socket, presenceJoined, emitRoomSync }),
+    [socket, presenceJoined, emitRoomSync],
   )
 
   return <MeetingSocketContext.Provider value={value}>{children}</MeetingSocketContext.Provider>

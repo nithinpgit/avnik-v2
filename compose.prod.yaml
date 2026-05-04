@@ -1,7 +1,12 @@
 # Production: from repo root run `docker compose -f compose.prod.yaml up --build`
-# Frontend nginx serves the SPA and proxies /api and /socket.io to the API container.
+# Frontend nginx serves the SPA and proxies /api, /socket.io, and /ws (SFU signaling) to backend / mediaserver.
+# Publish UDP RTP range on meet-mediaserver (or use hostNetwork in Kubernetes). Set MEDIASOUP_ANNOUNCED_IP to a
+# browser-reachable address (node public IP, LB, or pod host).
 # Terminate TLS at your edge reverse proxy (e.g. Traefik, Caddy, cloud LB) in front of the published HTTP port.
 name: avnik-meeting-prod
+
+x-media-jwt-secret: &media_jwt_secret
+  MEDIA_JWT_SECRET: ${MEDIA_JWT_SECRET:-change-me-set-MEDIA_JWT_SECRET-in-production}
 
 services:
   redis:
@@ -17,12 +22,33 @@ services:
       dockerfile: Dockerfile
     container_name: meet-backend-prod
     environment:
+      <<: *media_jwt_secret
       NODE_ENV: production
       PORT: "3000"
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
       REDIS_URL: redis://redis:6379
     expose:
       - "3000"
+    depends_on:
+      - redis
+
+  meet-mediaserver:
+    build:
+      context: ./meet-mediaserver
+      dockerfile: Dockerfile
+    container_name: meet-mediaserver-prod
+    environment:
+      <<: *media_jwt_secret
+      NODE_ENV: production
+      PORT: "3001"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      MEDIASOUP_ANNOUNCED_IP: ${MEDIASOUP_ANNOUNCED_IP:-}
+      MEDIASOUP_RTC_MIN_PORT: ${MEDIASOUP_RTC_MIN_PORT:-40000}
+      MEDIASOUP_RTC_MAX_PORT: ${MEDIASOUP_RTC_MAX_PORT:-40100}
+    expose:
+      - "3001"
+    ports:
+      - "${MEDIASOUP_RTC_MIN_PORT:-40000}-${MEDIASOUP_RTC_MAX_PORT:-40100}:${MEDIASOUP_RTC_MIN_PORT:-40000}-${MEDIASOUP_RTC_MAX_PORT:-40100}/udp"
     depends_on:
       - redis
 
@@ -35,6 +61,7 @@ services:
       - "${HTTP_PORT:-8080}:80"
     depends_on:
       - meet-backend
+      - meet-mediaserver
 
 volumes:
   meet_redis_data_prod:
