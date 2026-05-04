@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
+import { useMediasoupMedia } from '../mediasoup/MediasoupMediaProvider'
 import {
   closeParticipantMenu,
   selectCameraStatus,
@@ -24,8 +25,13 @@ const menuItems = [
   { id: 'exit', label: 'Exit User' },
 ] as const
 
+function liveTrack(stream: MediaStream | null | undefined, kind: 'audio' | 'video') {
+  return stream?.getTracks().find((t) => t.kind === kind && t.readyState === 'live')
+}
+
 export function ParticipantVideoTile({ participant, tileIndex = 0 }: ParticipantVideoTileProps) {
   const dispatch = useAppDispatch()
+  const { remoteStreams } = useMediasoupMedia()
   const localParticipantId = useAppSelector(selectLocalParticipantId)
   const localStream = useAppSelector(selectLocalStream)
   const cameraStatus = useAppSelector(selectCameraStatus)
@@ -33,9 +39,11 @@ export function ParticipantVideoTile({ participant, tileIndex = 0 }: Participant
 
   const isLocal = participant.id === localParticipantId
   const menuOpen = openMenuId === participant.id
+  const remoteStream = !isLocal ? remoteStreams[participant.id] : undefined
 
   const rootRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
     if (!menuOpen) return
@@ -56,26 +64,58 @@ export function ParticipantVideoTile({ participant, tileIndex = 0 }: Participant
     }
   }, [menuOpen, dispatch])
 
-  /** Until WebRTC lands, every tile mirrors the local preview stream. */
-  const showVideo = Boolean(localStream && cameraStatus === 'ready')
+  const localVideoLive = Boolean(liveTrack(localStream, 'video'))
+  const showLocalVideo = isLocal && localVideoLive && cameraStatus === 'ready'
+
+  const remoteVideoLive = Boolean(liveTrack(remoteStream, 'video'))
+  const showRemoteVideo = !isLocal && remoteVideoLive
+
+  const remoteAudioOnly =
+    !isLocal && !remoteVideoLive && Boolean(liveTrack(remoteStream, 'audio'))
+
+  const showVideo = showLocalVideo || showRemoteVideo
   const showCameraIssue = isLocal && (cameraStatus === 'denied' || cameraStatus === 'error')
 
   useEffect(() => {
     const el = videoRef.current
-    if (!el || !showVideo || !localStream) {
-      if (el) {
-        el.srcObject = null
-      }
+    if (!el || !showVideo) {
+      if (el) el.srcObject = null
       return
     }
-    el.srcObject = localStream
+    const stream = isLocal ? localStream : remoteStream
+    if (!stream) {
+      el.srcObject = null
+      return
+    }
+    el.srcObject = stream
+    el.muted = isLocal
     el.play().catch(() => {
       /* autoplay policies — ignore */
     })
     return () => {
       el.srcObject = null
     }
-  }, [localStream, showVideo])
+  }, [isLocal, localStream, remoteStream, showVideo, cameraStatus])
+
+  useEffect(() => {
+    const el = audioRef.current
+    if (!el || !remoteAudioOnly || !remoteStream) {
+      if (el) el.srcObject = null
+      return
+    }
+    const at = liveTrack(remoteStream, 'audio')
+    if (!at) {
+      el.srcObject = null
+      return
+    }
+    el.srcObject = new MediaStream([at])
+    el.play().catch(() => {
+      /* autoplay — ignore */
+    })
+    return () => {
+      el.srcObject = null
+    }
+  }, [remoteAudioOnly, remoteStream])
 
   return (
     <div
@@ -90,14 +130,17 @@ export function ParticipantVideoTile({ participant, tileIndex = 0 }: Participant
         {showVideo ? (
           <video
             ref={videoRef}
-            className="video-tile__video"
+            className={`video-tile__video${isLocal ? ' video-tile__video--mirrored' : ''}`}
             playsInline
-            muted
+            muted={isLocal}
             autoPlay
           />
         ) : null}
+        {remoteAudioOnly ? (
+          <audio ref={audioRef} className="video-tile__audio-only" autoPlay playsInline />
+        ) : null}
         <div
-          className={`video-tile__fallback ${showVideo ? 'video-tile__fallback--hidden' : ''}`}
+          className={`video-tile__fallback ${showVideo || remoteAudioOnly ? 'video-tile__fallback--hidden' : ''}`}
           aria-hidden
         />
         {showCameraIssue ? (

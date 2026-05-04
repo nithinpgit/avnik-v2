@@ -2,6 +2,10 @@
 # Source is bind-mounted; Nest/Vite watch reload on changes. node_modules live in named volumes.
 name: avnik-meeting-dev
 
+# Shared secret for POST /api/media/token (meet-backend) and WebSocket JWT (meet-mediaserver).
+x-media-jwt-secret: &media_jwt_secret
+  MEDIA_JWT_SECRET: ${MEDIA_JWT_SECRET:-dev-media-jwt-change-in-production}
+
 services:
   redis:
     image: redis:7-alpine
@@ -24,6 +28,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      <<: *media_jwt_secret
       NODE_ENV: development
       PORT: "3000"
       CORS_ORIGIN: http://localhost:5173,http://127.0.0.1:5173
@@ -31,6 +36,29 @@ services:
       REDIS_URL: redis://redis:6379
     depends_on:
       - redis
+
+  meet-mediaserver:
+    build:
+      context: ./meet-mediaserver
+      dockerfile: Dockerfile.local
+    container_name: meet-mediaserver-dev
+    working_dir: /app
+    volumes:
+      - ./meet-mediaserver:/app
+      - meet_mediaserver_node_modules:/app/node_modules
+    ports:
+      - "3001:3001/tcp"
+      - "40000-40100:40000-40100/udp"
+    environment:
+      <<: *media_jwt_secret
+      NODE_ENV: development
+      PORT: "3001"
+      LOG_LEVEL: info
+      # ICE host candidate IP as seen from the browser (dev on same machine: host-published RTP).
+      MEDIASOUP_ANNOUNCED_IP: ${MEDIASOUP_ANNOUNCED_IP:-127.0.0.1}
+      MEDIASOUP_RTC_MIN_PORT: "40000"
+      MEDIASOUP_RTC_MAX_PORT: "40100"
+      CHOKIDAR_USEPOLLING: "true"
 
   meet-frontend:
     build:
@@ -44,13 +72,19 @@ services:
     ports:
       - "5173:5173"
     environment:
+      # Align with .npmrc (Excalidraw / Radix nested peers vs React 19).
+      NPM_CONFIG_LEGACY_PEER_DEPS: "true"
       VITE_BIND_ALL: "1"
       VITE_DEV_PROXY_TARGET: http://meet-backend:3000
+      # Browser connects from host → published mediaserver port (override for TLS / remote host).
+      VITE_MEDIA_WS_URL: ${VITE_MEDIA_WS_URL:-ws://localhost:3001}
       CHOKIDAR_USEPOLLING: "true"
     depends_on:
       - meet-backend
+      - meet-mediaserver
 
 volumes:
   meet_backend_node_modules:
   meet_frontend_node_modules:
+  meet_mediaserver_node_modules:
   meet_redis_data_dev:

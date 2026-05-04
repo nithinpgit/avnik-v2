@@ -41,5 +41,6 @@ export const selectPreMeetingOpen = (state: RootState) => state.preMeeting.isOpe
 export const selectPreMeetingEntryCompleted = (state: RootState) =>
   state.preMeeting.entryCompleted
 export const selectPreMeetingWantsVideo = (state: RootState) => state.preMeeting.wantsVideo
+export const selectPreMeetingLastMediaMode = (state: RootState) => state.preMeeting.lastMediaMode
 
 export default preMeetingSlice.reducer

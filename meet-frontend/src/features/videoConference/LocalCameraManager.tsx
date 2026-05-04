@@ -3,8 +3,8 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
 import {
   selectPreMeetingEntryCompleted,
+  selectPreMeetingLastMediaMode,
   selectPreMeetingOpen,
-  selectPreMeetingWantsVideo,
 } from '../preMeeting/preMeetingSlice'
 import {
   setCameraErrorMessage,
@@ -13,24 +13,27 @@ import {
 } from './videoConferenceSlice'
 
 /**
- * Acquires the local camera when there is no stream yet (e.g. after pre-meeting
- * closed without a preview stream). Skips while the pre-meeting modal is open or
- * when the user chose not to use video.
+ * Ensures a local MediaStream exists for the meeting when pre-meeting did not leave one
+ * (e.g. user skipped device preview). Constraints follow `lastMediaMode` so the SFU can publish
+ * the right tracks.
  */
 export function LocalCameraManager() {
   const dispatch = useAppDispatch()
   const preMeetingOpen = useAppSelector(selectPreMeetingOpen)
   const entryCompleted = useAppSelector(selectPreMeetingEntryCompleted)
-  const wantsVideo = useAppSelector(selectPreMeetingWantsVideo)
+  const lastMediaMode = useAppSelector(selectPreMeetingLastMediaMode)
 
   useEffect(() => {
-    if (preMeetingOpen) {
+    if (preMeetingOpen || !entryCompleted) {
       return
     }
     if (store.getState().videoConference.localStream) {
       return
     }
-    if (entryCompleted && !wantsVideo) {
+
+    const mode = lastMediaMode ?? 'none'
+
+    if (mode === 'none') {
       dispatch(setCameraStatus('idle'))
       dispatch(setCameraErrorMessage(null))
       return
@@ -39,13 +42,23 @@ export function LocalCameraManager() {
     let stream: MediaStream | null = null
     let cancelled = false
 
+    const videoCons =
+      mode === 'both' || mode === 'webcam_only'
+        ? ({ facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } as const)
+        : false
+    const audioCons = mode === 'both' || mode === 'mic_only'
+
+    if (!videoCons && !audioCons) {
+      return
+    }
+
     dispatch(setCameraStatus('pending'))
     dispatch(setCameraErrorMessage(null))
 
     navigator.mediaDevices
       .getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
+        video: videoCons || false,
+        audio: audioCons || false,
       })
       .then((s) => {
         if (cancelled) {
@@ -54,7 +67,12 @@ export function LocalCameraManager() {
         }
         stream = s
         dispatch(setLocalStream(s))
-        dispatch(setCameraStatus('ready'))
+        if (videoCons) {
+          dispatch(setCameraStatus('ready'))
+        } else {
+          dispatch(setCameraStatus('idle'))
+        }
+        dispatch(setCameraErrorMessage(null))
       })
       .catch((err: Error) => {
         if (cancelled) return
@@ -70,7 +88,7 @@ export function LocalCameraManager() {
       dispatch(setCameraStatus('idle'))
       dispatch(setCameraErrorMessage(null))
     }
-  }, [preMeetingOpen, entryCompleted, wantsVideo, dispatch])
+  }, [preMeetingOpen, entryCompleted, lastMediaMode, dispatch])
 
   return null
 }

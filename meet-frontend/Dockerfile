@@ -2,8 +2,8 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json package-lock.json .npmrc ./
+RUN npm ci --no-audit --no-fund
 COPY . .
 ENV VITE_MEETING_API_URL=
 RUN npm run build
