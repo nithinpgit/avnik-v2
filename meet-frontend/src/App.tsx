@@ -2,6 +2,7 @@ import './App.css'
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from './app/hooks'
 import { initMeetingSessionFromLocation, selectMeetingUserId } from './features/meetingSession/meetingSessionSlice'
+import { MeetingChatChrome } from './features/chat/MeetingChatChrome'
 import { MeetingChatProvider } from './features/chat/MeetingChatProvider'
 import { MediasoupMediaProvider } from './features/mediasoup/MediasoupMediaProvider'
 import { MeetingSocketProvider } from './features/meetingRoom/MeetingSocketProvider'
@@ -31,6 +32,7 @@ function App() {
           <MediasoupMediaProvider>
             <WhiteboardModule />
             <VideoConferenceModule />
+            <MeetingChatChrome />
             <PreMeetingModal />
           </MediasoupMediaProvider>
         </MeetingChatProvider>

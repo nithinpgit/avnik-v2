@@ -17,6 +17,7 @@ import {
 import { selectParticipants } from '../videoConference/videoConferenceSlice'
 import { fetchChatHistory, fetchChatUnread } from './chatApi'
 import type { ChatMessage, ChatTab } from './chatTypes'
+import { playChatSound } from './playChatSound'
 import { applyChatRead, mergeChatMessage } from './chatUtils'
 
 export type MeetingChatContextValue = {
@@ -188,13 +189,7 @@ export function MeetingChatProvider({ children }: { children: ReactNode }) {
         setPublicMessages((list) => mergeChatMessage(list, msg))
         if (shouldNotify(msg)) {
           setPublicUnread((n) => n + 1)
-          if (!soundMuted) {
-            try {
-              new Audio('/notification.mp3').play().catch(() => {})
-            } catch {
-              /* optional sound asset */
-            }
-          }
+          if (!soundMuted && !isOpenRef.current) playChatSound()
         } else if (isOpenRef.current && activeTabRef.current === 'public') {
           markRead([msg.id])
         }
@@ -209,6 +204,7 @@ export function MeetingChatProvider({ children }: { children: ReactNode }) {
             ...prev,
             [fromPeer]: (prev[fromPeer] ?? 0) + 1,
           }))
+          if (!soundMuted && !isOpenRef.current) playChatSound()
         } else if (
           isOpenRef.current &&
           activeTabRef.current === 'private' &&

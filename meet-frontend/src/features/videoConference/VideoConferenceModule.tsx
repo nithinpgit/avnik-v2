@@ -1,7 +1,5 @@
 import type { FC } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import { MeetingChatPanel } from '../chat/MeetingChatPanel'
-import { useMeetingChat } from '../chat/MeetingChatProvider'
 import { LocalCameraManager } from './LocalCameraManager'
 import { ParticipantVideoTile } from './ParticipantVideoTile'
 import {
@@ -11,7 +9,6 @@ import {
 } from './videoConferenceSlice'
 import {
   IconBell,
-  IconChat,
   IconCrown,
   IconDocument,
   IconExit,
@@ -45,8 +42,6 @@ export function VideoConferenceModule() {
   const dispatch = useAppDispatch()
   const isConferenceMode = useAppSelector(selectConferenceMode)
   const participants = useAppSelector(selectParticipants)
-  const { isOpen: chatOpen, toggleChat, unreadTotal } = useMeetingChat()
-
   return (
     <section
       className={`video-conference ${isConferenceMode ? 'conference' : 'normal'}`}
@@ -193,23 +188,6 @@ export function VideoConferenceModule() {
         </div>
       </footer>
 
-      <button
-        type="button"
-        className={`fab-corner fab-corner--chat meeting-tooltip meeting-tooltip--top ${chatOpen ? 'fab-corner--chat-active' : ''}`}
-        data-tooltip="Chat"
-        aria-label={unreadTotal > 0 ? `Chat (${unreadTotal} unread)` : 'Chat'}
-        aria-expanded={chatOpen}
-        onClick={toggleChat}
-      >
-        <IconChat />
-        {unreadTotal > 0 && !chatOpen ? (
-          <span className="fab-corner__chat-badge" aria-hidden>
-            {unreadTotal > 99 ? '99+' : unreadTotal}
-          </span>
-        ) : null}
-      </button>
-
-      <MeetingChatPanel />
     </section>
   )
 }

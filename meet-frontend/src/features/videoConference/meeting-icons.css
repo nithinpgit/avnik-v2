@@ -21,10 +21,10 @@
   font-display: block;
 }
 
-/* Scoped under .video-conference and .pre-meeting-modal — no global `i` rule (protects Excalidraw). */
+/* Scoped under meeting UI shells — no global `i` rule (protects Excalidraw). */
 
-:is(.video-conference, .pre-meeting-modal) i[class^='mr-'],
-:is(.video-conference, .pre-meeting-modal) i[class*=' mr-'] {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) i[class^='mr-'],
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) i[class*=' mr-'] {
   font-family: 'avnik' !important;
   speak: never;
   font-style: normal;
@@ -36,7 +36,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-:is(.video-conference, .pre-meeting-modal) i.lm {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) i.lm {
   font-family: 'liberate-meet-icons' !important;
   speak: never;
   font-style: normal;
@@ -47,265 +47,265 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-:is(.video-conference, .pre-meeting-modal) .mr-webinar1-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-webinar1-icon:before {
   content: "\e952";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-appointments-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-appointments-icon:before {
   content: "\e953";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-Meet-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-Meet-icon:before {
   content: "\e954";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-ongoing-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-ongoing-icon:before {
   content: "\e955";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-traning-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-traning-icon:before {
   content: "\e956";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-sound-mute-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-sound-mute-icon:before {
   content: "\e92c";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-sound-unmute-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-sound-unmute-icon:before {
   content: "\e951";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-Logo-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-Logo-icon:before {
   content: "\e950";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-document-off-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-document-off-icon:before {
   content: "\e94d";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-share-off-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-share-off-icon:before {
   content: "\e94e";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-video-off-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-video-off-icon:before {
   content: "\e94f";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-add-card-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-add-card-icon:before {
   content: "\e900";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-all-mic-off-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-all-mic-off-icon:before {
   content: "\e901";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-all-mic-on-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-all-mic-on-icon:before {
   content: "\e902";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-all-webcam-off-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-all-webcam-off-icon:before {
   content: "\e903";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-all-webcam-on-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-all-webcam-on-icon:before {
   content: "\e904";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-attachment-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-attachment-icon:before {
   content: "\e905";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-attended-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-attended-icon:before {
   content: "\e906";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-audio-output-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-audio-output-icon:before {
   content: "\e907";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-back-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-back-icon:before {
   content: "\e908";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-chat-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-chat-icon:before {
   content: "\e909";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-choose-color-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-choose-color-icon:before {
   content: "\e90a";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-clear-all-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-clear-all-icon:before {
   content: "\e90b";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-close-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-close-icon:before {
   content: "\e90c";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-closed-caption-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-closed-caption-icon:before {
   content: "\e90d";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-dashed-line-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-dashed-line-icon:before {
   content: "\e90e";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-delete-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-delete-icon:before {
   content: "\e90f";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-desktop-view-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-desktop-view-icon:before {
   content: "\e910";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-document-share-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-document-share-icon:before {
   content: "\e911";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-dollar-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-dollar-icon:before {
   content: "\e912";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-download-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-download-icon:before {
   content: "\e913";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-dropdown-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-dropdown-icon:before {
   content: "\e914";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-ellipse-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-ellipse-icon:before {
   content: "\e915";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-emoji-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-emoji-icon:before {
   content: "\e916";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-end-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-end-icon:before {
   content: "\e917";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-end-meeting-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-end-meeting-icon:before {
   content: "\e918";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-eraser-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-eraser-icon:before {
   content: "\e919";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-event-cost-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-event-cost-icon:before {
   content: "\e91a";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-exit-full-screen-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-exit-full-screen-icon:before {
   content: "\e91b";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-exit-user-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-exit-user-icon:before {
   content: "\e91c";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-faq-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-faq-icon:before {
   content: "\e91d";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-file-ext-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-file-ext-icon:before {
   content: "\e91e";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-file-jpg-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-file-jpg-icon:before {
   content: "\e91f";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-file-upload-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-file-upload-icon:before {
   content: "\e920";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-flip-dropdown-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-flip-dropdown-icon:before {
   content: "\e921";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-full-screen-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-full-screen-icon:before {
   content: "\e922";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-grid-view-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-grid-view-icon:before {
   content: "\e923";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-group-chat-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-group-chat-icon:before {
   content: "\e924";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-help-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-help-icon:before {
   content: "\e925";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-horizontal-more-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-horizontal-more-icon:before {
   content: "\e926";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-host-popup-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-host-popup-icon:before {
   content: "\e927";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-image-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-image-icon:before {
   content: "\e928";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-invite-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-invite-icon:before {
   content: "\e929";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-left-page-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-left-page-icon:before {
   content: "\e92a";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-list-view-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-list-view-icon:before {
   content: "\e92b";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-mic-off-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-mic-off-icon:before {
   content: "\e92d";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-mic-on-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-mic-on-icon:before {
   content: "\e92e";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-notification-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-notification-icon:before {
   content: "\e92f";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-on-cost-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-on-cost-icon:before {
   content: "\e930";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-pause-timer-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-pause-timer-icon:before {
   content: "\e931";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-pencil-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-pencil-icon:before {
   content: "\e932";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-pointer-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-pointer-icon:before {
   content: "\e933";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-present-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-present-icon:before {
   content: "\e934";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-rectangle-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-rectangle-icon:before {
   content: "\e935";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-redo-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-redo-icon:before {
   content: "\e936";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-right-page-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-right-page-icon:before {
   content: "\e937";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-screen-share-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-screen-share-icon:before {
   content: "\e938";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-search-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-search-icon:before {
   content: "\e939";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-seats-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-seats-icon:before {
   content: "\e93a";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-send-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-send-icon:before {
   content: "\e93b";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-setting-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-setting-icon:before {
   content: "\e93c";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-share-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-share-icon:before {
   content: "\e93d";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-solid-line-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-solid-line-icon:before {
   content: "\e93e";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-star-rating-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-star-rating-icon:before {
   content: "\e93f";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-start-timer-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-start-timer-icon:before {
   content: "\e940";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-text-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-text-icon:before {
   content: "\e941";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-undo-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-undo-icon:before {
   content: "\e942";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-user-chat-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-user-chat-icon:before {
   content: "\e943";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-vertical-more-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-vertical-more-icon:before {
   content: "\e944";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-video-share-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-video-share-icon:before {
   content: "\e945";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-video-upload-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-video-upload-icon:before {
   content: "\e946";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-voice-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-voice-icon:before {
   content: "\e947";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-webcam-off-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-webcam-off-icon:before {
   content: "\e948";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-webcam-on-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-webcam-on-icon:before {
   content: "\e949";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-webinar-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-webinar-icon:before {
   content: "\e94a";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-zoom-in-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-zoom-in-icon:before {
   content: "\e94b";
 }
-:is(.video-conference, .pre-meeting-modal) .mr-zoom-out-icon:before {
+:is(.video-conference, .pre-meeting-modal, .meeting-chat-chrome) .mr-zoom-out-icon:before {
   content: "\e94c";
 }
 .video-conference .lm-rectangle1-icon:before {

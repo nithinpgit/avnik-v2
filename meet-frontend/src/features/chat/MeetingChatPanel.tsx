@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState, type RefObject } from 
 import { useMeetingChat } from './MeetingChatProvider'
 import { formatChatTime } from './chatUtils'
 import type { ChatMessage } from './chatTypes'
+import './meetingChatChrome.css'
 import '../videoConference/groupChatPopup.css'
 
 function ChatBubble({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
