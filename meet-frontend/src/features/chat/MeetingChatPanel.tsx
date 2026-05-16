@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type RefObject } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useMeetingChat } from './MeetingChatProvider'
 import { formatChatTime } from './chatUtils'
 import type { ChatMessage } from './chatTypes'
@@ -35,26 +35,45 @@ function ChatBubble({ msg, isSelf }: { msg: ChatMessage; isSelf: boolean }) {
   )
 }
 
+function scrollMessagesToBottom(el: HTMLElement, behavior: ScrollBehavior = 'smooth') {
+  el.scrollTo({ top: el.scrollHeight, behavior })
+}
+
 function MessageList({
   messages,
   localUserId,
-  listRef,
 }: {
   messages: ChatMessage[]
   localUserId: string
-  listRef: RefObject<HTMLUListElement | null>
 }) {
-  useEffect(() => {
+  const listRef = useRef<HTMLUListElement>(null)
+  const bottomRef = useRef<HTMLLIElement>(null)
+  const prevCountRef = useRef(0)
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     const el = listRef.current
-    if (el) el.scrollTop = el.scrollHeight
-  }, [messages, listRef])
+    if (!el) return
+    requestAnimationFrame(() => {
+      scrollMessagesToBottom(el, behavior)
+      bottomRef.current?.scrollIntoView({ behavior, block: 'end' })
+    })
+  }, [])
+
+  useEffect(() => {
+    const grew = messages.length > prevCountRef.current
+    prevCountRef.current = messages.length
+    scrollToBottom(grew ? 'smooth' : 'auto')
+  }, [messages, scrollToBottom])
 
   return (
-    <ul ref={listRef} className="chat-list message_box_scroll" aria-live="polite">
-      {messages.map((msg) => (
-        <ChatBubble key={msg.id} msg={msg} isSelf={msg.senderId === localUserId} />
-      ))}
-    </ul>
+    <div className="chat-rbox">
+      <ul ref={listRef} className="chat-list message_box_scroll" aria-live="polite">
+        {messages.map((msg) => (
+          <ChatBubble key={msg.id} msg={msg} isSelf={msg.senderId === localUserId} />
+        ))}
+        <li ref={bottomRef} className="chat-scroll-anchor" aria-hidden="true" />
+      </ul>
+    </div>
   )
 }
 
@@ -111,7 +130,6 @@ function Composer({
 
 export function MeetingChatPanel() {
   const titleId = useId()
-  const listRef = useRef<HTMLUListElement>(null)
   const {
     isOpen,
     closeChat,
@@ -245,13 +263,7 @@ export function MeetingChatPanel() {
 
           {activeTab === 'public' ? (
             <div className="group_chat_popup_sec">
-              <div className="chat-rbox">
-                <MessageList
-                  messages={publicMessages}
-                  localUserId={localUserId}
-                  listRef={listRef}
-                />
-              </div>
+              <MessageList key="public" messages={publicMessages} localUserId={localUserId} />
               <Composer placeholder="Type a group message..." onSend={sendMessage} />
             </div>
           ) : (
@@ -297,13 +309,11 @@ export function MeetingChatPanel() {
                 </div>
               ) : (
                 <div className="WB-pop-person-chat">
-                  <div className="chat-rbox">
-                    <MessageList
-                      messages={privateMessages}
-                      localUserId={localUserId}
-                      listRef={listRef}
-                    />
-                  </div>
+                  <MessageList
+                    key={selectedPeerId ?? 'private-empty'}
+                    messages={privateMessages}
+                    localUserId={localUserId}
+                  />
                   <Composer
                     placeholder={`Message ${selectedPeer?.name ?? ''}...`}
                     onSend={sendMessage}
