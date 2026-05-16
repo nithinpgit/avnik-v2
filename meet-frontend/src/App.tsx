@@ -2,6 +2,7 @@ import './App.css'
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from './app/hooks'
 import { initMeetingSessionFromLocation, selectMeetingUserId } from './features/meetingSession/meetingSessionSlice'
+import { MeetingChatProvider } from './features/chat/MeetingChatProvider'
 import { MediasoupMediaProvider } from './features/mediasoup/MediasoupMediaProvider'
 import { MeetingSocketProvider } from './features/meetingRoom/MeetingSocketProvider'
 import { PreMeetingModal } from './features/preMeeting/PreMeetingModal'
@@ -26,11 +27,13 @@ function App() {
   return (
     <main className="app-shell">
       <MeetingSocketProvider>
-        <MediasoupMediaProvider>
-          <WhiteboardModule />
-          <VideoConferenceModule />
-          <PreMeetingModal />
-        </MediasoupMediaProvider>
+        <MeetingChatProvider>
+          <MediasoupMediaProvider>
+            <WhiteboardModule />
+            <VideoConferenceModule />
+            <PreMeetingModal />
+          </MediasoupMediaProvider>
+        </MeetingChatProvider>
       </MeetingSocketProvider>
     </main>
   )

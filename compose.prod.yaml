@@ -9,6 +9,21 @@ x-media-jwt-secret: &media_jwt_secret
   MEDIA_JWT_SECRET: ${MEDIA_JWT_SECRET:-change-me-set-MEDIA_JWT_SECRET-in-production}
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: meet-postgres-prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-meet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meet}
+      POSTGRES_DB: ${POSTGRES_DB:-meet}
+    volumes:
+      - meet_postgres_data_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-meet} -d ${POSTGRES_DB:-meet}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   redis:
     image: redis:7-alpine
     container_name: meet-redis-prod
@@ -27,10 +42,15 @@ services:
       PORT: "3000"
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
       REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://${POSTGRES_USER:-meet}:${POSTGRES_PASSWORD:-meet}@postgres:5432/${POSTGRES_DB:-meet}
+      DATABASE_SYNC: ${DATABASE_SYNC:-false}
     expose:
       - "3000"
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
   meet-mediaserver:
     build:
@@ -65,3 +85,4 @@ services:
 
 volumes:
   meet_redis_data_prod:
+  meet_postgres_data_prod:

@@ -11,6 +11,9 @@ import {
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
 import type { Server, Socket } from 'socket.io'
+import { ChatService } from '../chat/chat.service'
+import { ChatMarkReadDto } from '../chat/dto/chat-mark-read.dto'
+import { ChatSendDto } from '../chat/dto/chat-send.dto'
 import { RoomSyncDto } from '../sync/dto/room-sync.dto'
 import { MAX_ROOM_SYNC_CHANNEL_BYTES, RoomSyncService } from '../sync/room-sync.service'
 import { JoinRoomDto } from './dto/join-room.dto'
@@ -37,6 +40,7 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
   constructor(
     private readonly roomsService: RoomsService,
     private readonly roomSyncService: RoomSyncService,
+    private readonly chatService: ChatService,
   ) {}
 
   afterInit(server: Server) {
@@ -162,6 +166,127 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
       channel: dto.channel,
       payload: dto.payload,
     })
+  }
+
+  @SubscribeMessage('chat_send')
+  async chatSend(@ConnectedSocket() client: Socket, @MessageBody() body: unknown): Promise<void> {
+    const dto = plainToInstance(ChatSendDto, body ?? {})
+    const errors = validateSync(dto, { forbidUnknownValues: false })
+    if (errors.length > 0) {
+      client.emit('chat_error', {
+        message: 'Invalid chat_send payload',
+        details: errors.map((e) => ({ property: e.property, constraints: e.constraints })),
+      })
+      return
+    }
+
+    const data = client.data as SocketData
+    if (!data.roomId || data.roomId !== dto.roomId || !data.userId) {
+      client.emit('chat_error', { message: 'Must join_room before chat_send' })
+      return
+    }
+
+    const room = this.roomsService.getRoom(dto.roomId)
+    if (!room) {
+      client.emit('chat_error', { message: 'Room not found' })
+      return
+    }
+
+    const sender = room.peersByUserId.get(data.userId)
+    if (!sender) {
+      client.emit('chat_error', { message: 'Sender not in room' })
+      return
+    }
+
+    if (dto.kind === 'private') {
+      const recipient = room.peersByUserId.get(dto.recipientId!)
+      if (!recipient) {
+        client.emit('chat_error', { message: 'Recipient not in room' })
+        return
+      }
+    }
+
+    try {
+      const message = await this.chatService.createMessage({
+        roomId: dto.roomId,
+        senderId: data.userId,
+        senderName: sender.name,
+        kind: dto.kind,
+        recipientId: dto.recipientId ?? null,
+        body: dto.body,
+      })
+
+      const payload = { message }
+      if (dto.kind === 'public') {
+        this.server.to(dto.roomId).emit('chat_message', payload)
+      } else {
+        this.emitChatToUsers(dto.roomId, [data.userId, dto.recipientId!], payload)
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Send failed'
+      client.emit('chat_error', { message: msg })
+    }
+  }
+
+  @SubscribeMessage('chat_mark_read')
+  async chatMarkRead(@ConnectedSocket() client: Socket, @MessageBody() body: unknown): Promise<void> {
+    const dto = plainToInstance(ChatMarkReadDto, body ?? {})
+    const errors = validateSync(dto, { forbidUnknownValues: false })
+    if (errors.length > 0) {
+      client.emit('chat_error', {
+        message: 'Invalid chat_mark_read payload',
+        details: errors.map((e) => ({ property: e.property, constraints: e.constraints })),
+      })
+      return
+    }
+
+    const data = client.data as SocketData
+    if (!data.roomId || data.roomId !== dto.roomId || !data.userId) {
+      client.emit('chat_error', { message: 'Must join_room before chat_mark_read' })
+      return
+    }
+
+    const room = this.roomsService.getRoom(dto.roomId)
+    const reader = room?.peersByUserId.get(data.userId)
+    if (!reader) {
+      client.emit('chat_error', { message: 'Reader not in room' })
+      return
+    }
+
+    try {
+      const result = await this.chatService.markRead({
+        roomId: dto.roomId,
+        userId: data.userId,
+        userName: reader.name,
+        messageIds: dto.messageIds,
+      })
+      if (result.messageIds.length === 0) return
+
+      this.server.to(dto.roomId).emit('chat_read', {
+        roomId: dto.roomId,
+        messageIds: result.messageIds,
+        userId: data.userId,
+        userName: reader.name,
+        readAt: result.readAt,
+      })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Mark read failed'
+      client.emit('chat_error', { message: msg })
+    }
+  }
+
+  private emitChatToUsers(roomId: string, userIds: string[], payload: unknown) {
+    const room = this.roomsService.getRoom(roomId)
+    if (!room) return
+    const seen = new Set<string>()
+    for (const uid of userIds) {
+      if (seen.has(uid)) continue
+      seen.add(uid)
+      const peer = room.peersByUserId.get(uid)
+      if (peer) {
+        this.server.to(peer.socketId).emit('chat_message', payload)
+      }
+    }
   }
 
   private leaveRoomSocket(client: Socket, roomId: string) {

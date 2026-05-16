@@ -1,7 +1,7 @@
 import type { FC } from 'react'
-import { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import { GroupChatPopup } from './GroupChatPopup'
+import { MeetingChatPanel } from '../chat/MeetingChatPanel'
+import { useMeetingChat } from '../chat/MeetingChatProvider'
 import { LocalCameraManager } from './LocalCameraManager'
 import { ParticipantVideoTile } from './ParticipantVideoTile'
 import {
@@ -45,7 +45,7 @@ export function VideoConferenceModule() {
   const dispatch = useAppDispatch()
   const isConferenceMode = useAppSelector(selectConferenceMode)
   const participants = useAppSelector(selectParticipants)
-  const [chatOpen, setChatOpen] = useState(false)
+  const { isOpen: chatOpen, toggleChat, unreadTotal } = useMeetingChat()
 
   return (
     <section
@@ -197,14 +197,19 @@ export function VideoConferenceModule() {
         type="button"
         className={`fab-corner fab-corner--chat meeting-tooltip meeting-tooltip--top ${chatOpen ? 'fab-corner--chat-active' : ''}`}
         data-tooltip="Chat"
-        aria-label="Chat"
+        aria-label={unreadTotal > 0 ? `Chat (${unreadTotal} unread)` : 'Chat'}
         aria-expanded={chatOpen}
-        onClick={() => setChatOpen((o) => !o)}
+        onClick={toggleChat}
       >
         <IconChat />
+        {unreadTotal > 0 && !chatOpen ? (
+          <span className="fab-corner__chat-badge" aria-hidden>
+            {unreadTotal > 99 ? '99+' : unreadTotal}
+          </span>
+        ) : null}
       </button>
 
-      <GroupChatPopup isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      <MeetingChatPanel />
     </section>
   )
 }

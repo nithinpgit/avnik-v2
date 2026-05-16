@@ -7,6 +7,23 @@ x-media-jwt-secret: &media_jwt_secret
   MEDIA_JWT_SECRET: ${MEDIA_JWT_SECRET:-dev-media-jwt-change-in-production}
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: meet-postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: meet
+      POSTGRES_PASSWORD: meet
+      POSTGRES_DB: meet
+    volumes:
+      - meet_postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meet -d meet"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   redis:
     image: redis:7-alpine
     container_name: meet-redis-dev
@@ -34,8 +51,13 @@ services:
       CORS_ORIGIN: http://localhost:5173,http://127.0.0.1:5173
       CHOKIDAR_USEPOLLING: "true"
       REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://meet:meet@postgres:5432/meet
+      DATABASE_SYNC: "true"
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
   meet-mediaserver:
     build:
@@ -88,3 +110,4 @@ volumes:
   meet_frontend_node_modules:
   meet_mediaserver_node_modules:
   meet_redis_data_dev:
+  meet_postgres_data_dev:
