@@ -10,8 +10,9 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useAppSelector } from '../../app/hooks'
 import { selectPreMeetingEntryCompleted } from '../preMeeting/preMeetingSlice'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
-import { selectWhiteboardTheme } from './whiteboardSlice'
+import { selectPresentationVisible } from '../documents/documentsSlice'
 import { PresentationLayer } from '../documents/PresentationLayer'
+import { selectWhiteboardTheme } from './whiteboardSlice'
 import './whiteboard.css'
 
 const WHITEBOARD_CHANNEL = 'whiteboard'
@@ -21,8 +22,12 @@ export type WhiteboardSyncPayload = {
   body: string
 }
 
+const DEFAULT_VIEW_BG = '#ffffff'
+const TRANSPARENT_VIEW_BG = 'transparent'
+
 export function WhiteboardModule() {
   const theme = useAppSelector(selectWhiteboardTheme)
+  const presentationActive = useAppSelector(selectPresentationVisible)
   const entryCompleted = useAppSelector(selectPreMeetingEntryCompleted)
   const whiteboardDoc = useAppSelector((s) => s.roomSync.channels[WHITEBOARD_CHANNEL])
   const { emitRoomSync } = useMeetingSocket()
@@ -90,23 +95,58 @@ export function WhiteboardModule() {
       if (restored.files && Object.keys(restored.files).length > 0) {
         api.addFiles(Object.values(restored.files))
       }
+      if (presentationActive) {
+        api.updateScene({
+          appState: {
+            viewBackgroundColor: TRANSPARENT_VIEW_BG,
+            gridModeEnabled: false,
+          },
+          captureUpdate: CaptureUpdateAction.NEVER,
+        })
+      }
       requestAnimationFrame(() => {
         suppressEmitRef.current = false
       })
     } catch {
       lastRemoteJsonRef.current = null
     }
-  }, [whiteboardDoc])
+  }, [whiteboardDoc, presentationActive])
+
+  useEffect(() => {
+    const api = apiRef.current
+    if (!api) return
+    if (presentationActive) {
+      api.updateScene({
+        appState: {
+          viewBackgroundColor: TRANSPARENT_VIEW_BG,
+          gridModeEnabled: false,
+        },
+        captureUpdate: CaptureUpdateAction.NEVER,
+      })
+    } else {
+      api.updateScene({
+        appState: {
+          viewBackgroundColor: theme === 'dark' ? '#121212' : DEFAULT_VIEW_BG,
+          gridModeEnabled: true,
+        },
+        captureUpdate: CaptureUpdateAction.NEVER,
+      })
+    }
+  }, [presentationActive, theme])
 
   return (
-    <section className="whiteboard-module" aria-label="Whiteboard workspace">
+    <section
+      className={`whiteboard-module${presentationActive ? ' whiteboard-module--over-document' : ''}`}
+      aria-label="Whiteboard workspace"
+    >
       <PresentationLayer />
       <div className="whiteboard-module__canvas">
       <Excalidraw
         theme={theme}
         initialData={{
           appState: {
-            gridModeEnabled: true,
+            viewBackgroundColor: presentationActive ? TRANSPARENT_VIEW_BG : DEFAULT_VIEW_BG,
+            gridModeEnabled: !presentationActive,
             gridStep: 5,
           },
         }}

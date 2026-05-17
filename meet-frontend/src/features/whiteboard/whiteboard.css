@@ -10,3 +10,18 @@
   inset: 0;
   z-index: 2;
 }
+
+/* Let shared PDF/image show through while Excalidraw stays on top for annotations */
+.whiteboard-module--over-document .whiteboard-module__canvas,
+.whiteboard-module--over-document .excalidraw,
+.whiteboard-module--over-document .excalidraw .App-menu_top,
+.whiteboard-module--over-document .excalidraw .layer-ui__wrapper {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.whiteboard-module--over-document .excalidraw .excalidraw__canvas-wrapper,
+.whiteboard-module--over-document .excalidraw canvas.excalidraw__canvas {
+  background: transparent !important;
+  background-color: transparent !important;
+}
