@@ -21,6 +21,8 @@ import type {
 import { useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
+import { SCREEN_SHARE_SYNC_CHANNEL } from '../screenShare/screenShareSync'
+import { selectScreenShareSync } from '../screenShare/selectScreenShareSync'
 import {
   selectMeetingDisplayName,
   selectMeetingRoomId,
@@ -50,6 +52,8 @@ export type MediasoupMediaContextValue = {
   remoteStreams: Readonly<Record<string, MediaStream>>
   /** Remote screen share (video + optional tab audio) per peer id. */
   remoteScreenStreams: Readonly<Record<string, MediaStream>>
+  /** Peer currently presenting screen share (null = hide remote stage). */
+  remoteScreenPresenterId: string | null
   localScreenStream: MediaStream | null
   isScreenSharing: boolean
   sfuStatus: 'idle' | 'connecting' | 'connected' | 'error'
@@ -107,7 +111,8 @@ function mergeRemoteTrack(
 }
 
 export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
-  const { presenceJoined } = useMeetingSocket()
+  const { presenceJoined, emitRoomSync } = useMeetingSocket()
+  const screenShareSync = useAppSelector(selectScreenShareSync)
   const meetingLive = useAppSelector(selectIsMeetingLive)
   const sfuSessionKey = useAppSelector(selectSfuSessionKey)
   const localStream = useAppSelector(selectLocalStream)
@@ -119,6 +124,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
 
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
   const [remoteScreenStreams, setRemoteScreenStreams] = useState<Record<string, MediaStream>>({})
+  const [remoteScreenPresenterId, setRemoteScreenPresenterId] = useState<string | null>(null)
   const [localScreenStream, setLocalScreenStream] = useState<MediaStream | null>(null)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [sfuStatus, setSfuStatus] = useState<MediasoupMediaContextValue['sfuStatus']>('idle')
@@ -129,6 +135,18 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   const sendTransportRef = useRef<Transport | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const stopScreenShareRef = useRef<() => void>(() => undefined)
+
+  const broadcastScreenShare = useCallback(
+    (active: boolean) => {
+      if (!userId) return
+      emitRoomSync(SCREEN_SHARE_SYNC_CHANNEL, {
+        active,
+        presenterId: active ? userId : null,
+        presenterName: active ? displayName || undefined : undefined,
+      })
+    },
+    [emitRoomSync, userId, displayName],
+  )
 
   const syncLocalMedia = useCallback(async (stream: MediaStream | null) => {
     const producers = producersRef.current
@@ -173,6 +191,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const stopScreenShare = useCallback(() => {
+    broadcastScreenShare(false)
     const producers = producersRef.current
     try {
       producers.screenVideo?.close()
@@ -190,7 +209,8 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     screenStreamRef.current = null
     setLocalScreenStream(null)
     setIsScreenSharing(false)
-  }, [])
+    setRemoteScreenPresenterId(null)
+  }, [broadcastScreenShare])
 
   stopScreenShareRef.current = stopScreenShare
 
@@ -232,31 +252,51 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     const previewTracks = [videoTrack, ...(audioTrack ? [audioTrack] : [])]
     setLocalScreenStream(new MediaStream(previewTracks))
     setIsScreenSharing(true)
-  }, [isScreenSharing, sfuStatus, stopScreenShare])
+    broadcastScreenShare(true)
+  }, [isScreenSharing, sfuStatus, stopScreenShare, broadcastScreenShare])
 
   const upsertRemote = useCallback((producerPeerId: string, track: MediaStreamTrack) => {
     setRemoteStreams((prev) => mergeRemoteTrack(prev, producerPeerId, track))
   }, [])
 
-  const upsertRemoteScreen = useCallback((producerPeerId: string, track: MediaStreamTrack) => {
-    setRemoteScreenStreams((prev) => mergeRemoteTrack(prev, producerPeerId, track))
+  const clearRemoteScreenShare = useCallback((peerId: string) => {
+    setRemoteScreenPresenterId((prev) => (prev === peerId ? null : prev))
+    setRemoteScreenStreams((prev) => {
+      const stream = prev[peerId]
+      if (!stream) return prev
+      const next = { ...prev }
+      for (const t of stream.getTracks()) {
+        t.stop()
+      }
+      delete next[peerId]
+      return next
+    })
   }, [])
 
+  const upsertRemoteScreen = useCallback(
+    (producerPeerId: string, track: MediaStreamTrack, source: string) => {
+      if (source === 'screen') {
+        setRemoteScreenPresenterId(producerPeerId)
+      }
+      setRemoteScreenStreams((prev) => mergeRemoteTrack(prev, producerPeerId, track))
+    },
+    [],
+  )
+
   useEffect(() => {
+    if (screenShareSync?.active) return
+    setRemoteScreenPresenterId(null)
     setRemoteScreenStreams((prev) => {
-      let changed = false
+      if (Object.keys(prev).length === 0) return prev
       const next = { ...prev }
-      for (const [peerId, stream] of Object.entries(prev)) {
-        if (hasLiveScreenVideo(stream)) continue
+      for (const stream of Object.values(next)) {
         for (const t of stream.getTracks()) {
           t.stop()
         }
-        delete next[peerId]
-        changed = true
       }
-      return changed ? next : prev
+      return {}
     })
-  }, [remoteScreenStreams])
+  }, [screenShareSync?.active, screenShareSync?.presenterId])
 
   useEffect(() => {
     const ids = new Set(participants.map((p) => p.id))
@@ -305,16 +345,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     let unlistenSignalingPush: (() => void) | null = null
 
     const dropRemoteScreenPeer = (peerId: string) => {
-      setRemoteScreenStreams((prev) => {
-        const stream = prev[peerId]
-        if (!stream) return prev
-        const next = { ...prev }
-        for (const t of stream.getTracks()) {
-          t.stop()
-        }
-        delete next[peerId]
-        return next
-      })
+      clearRemoteScreenShare(peerId)
     }
 
     const teardown = () => {
@@ -374,6 +405,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       ws = null
       setRemoteStreams({})
       setRemoteScreenStreams({})
+      setRemoteScreenPresenterId(null)
     }
 
     teardownRef.current?.()
@@ -405,23 +437,18 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      if (!track) return
-      setRemoteScreenStreams((prev) => {
-        const existing = prev[producerPeerId]
-        if (!existing) return prev
-        const next = { ...prev }
-        if (existing.getTracks().includes(track)) {
-          existing.removeTrack(track)
-          track.stop()
-        }
-        if (!hasLiveScreenVideo(existing)) {
-          for (const t of existing.getTracks()) {
-            t.stop()
+      if (track) {
+        setRemoteScreenStreams((prev) => {
+          const existing = prev[producerPeerId]
+          if (!existing) return prev
+          const next = { ...prev }
+          if (existing.getTracks().includes(track)) {
+            existing.removeTrack(track)
+            track.stop()
           }
-          delete next[producerPeerId]
-        }
-        return next
-      })
+          return next
+        })
+      }
     }
 
     async function consumeProducer(
@@ -464,7 +491,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       const source =
         data.source ?? sourceHint ?? (data.kind === 'audio' ? 'mic' : 'camera')
       if (isScreenSource(source)) {
-        upsertRemoteScreen(data.producerPeerId, consumer.track)
+        upsertRemoteScreen(data.producerPeerId, consumer.track, source)
         if (source === 'screen') {
           consumer.track.addEventListener('ended', () => {
             dropRemoteScreenPeer(data.producerPeerId)
@@ -690,12 +717,14 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     lastMediaMode,
     upsertRemote,
     upsertRemoteScreen,
+    clearRemoteScreenShare,
   ])
 
   const value = useMemo<MediasoupMediaContextValue>(
     () => ({
       remoteStreams,
       remoteScreenStreams,
+      remoteScreenPresenterId,
       localScreenStream,
       isScreenSharing,
       sfuStatus,
@@ -707,6 +736,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     [
       remoteStreams,
       remoteScreenStreams,
+      remoteScreenPresenterId,
       localScreenStream,
       isScreenSharing,
       sfuStatus,

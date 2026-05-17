@@ -1,55 +1,92 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useAppSelector } from '../../app/hooks'
 import { useMediasoupMedia } from '../mediasoup/MediasoupMediaProvider'
+import { selectMeetingUserId } from '../meetingSession/meetingSessionSlice'
 import { selectParticipants } from '../videoConference/videoConferenceSlice'
+import { selectScreenShareSync } from './selectScreenShareSync'
 import './screenShareStage.css'
 
-function liveVideoTrack(stream: MediaStream | null | undefined) {
-  return stream?.getVideoTracks().find((t) => t.kind === 'video' && t.readyState === 'live')
+function clearVideoElement(el: HTMLVideoElement | null) {
+  if (!el) return
+  el.pause()
+  el.srcObject = null
+  el.removeAttribute('src')
+  el.load()
 }
 
 export function ScreenShareStage() {
   const { remoteScreenStreams, localScreenStream, isScreenSharing } = useMediasoupMedia()
+  const screenShareSync = useAppSelector(selectScreenShareSync)
+  const userId = useAppSelector(selectMeetingUserId)
   const participants = useAppSelector(selectParticipants)
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   const active = useMemo(() => {
-    const remotePeerId = Object.keys(remoteScreenStreams).find((id) => {
-      const stream = remoteScreenStreams[id]
-      return Boolean(liveVideoTrack(stream))
-    })
-    if (remotePeerId) {
-      const name = participants.find((p) => p.id === remotePeerId)?.name ?? 'Participant'
+    const remotePresenterId =
+      screenShareSync?.active &&
+      screenShareSync.presenterId &&
+      screenShareSync.presenterId !== userId
+        ? screenShareSync.presenterId
+        : null
+
+    if (remotePresenterId) {
+      const stream = remoteScreenStreams[remotePresenterId]
+      if (!stream) return null
+      const name =
+        screenShareSync?.presenterName ??
+        participants.find((p) => p.id === remotePresenterId)?.name ??
+        'Participant'
       return {
-        stream: remoteScreenStreams[remotePeerId],
+        key: `remote-${remotePresenterId}`,
+        stream,
         label: `${name} is sharing their screen`,
         muted: false,
       }
     }
-    if (isScreenSharing && localScreenStream && liveVideoTrack(localScreenStream)) {
+
+    const localSharing =
+      isScreenSharing &&
+      localScreenStream &&
+      (screenShareSync?.active !== false || screenShareSync?.presenterId === userId)
+
+    if (localSharing) {
       return {
+        key: 'local-screen',
         stream: localScreenStream,
         label: 'You are sharing your screen',
         muted: true,
       }
     }
+
     return null
-  }, [remoteScreenStreams, localScreenStream, isScreenSharing, participants])
+  }, [
+    screenShareSync,
+    userId,
+    remoteScreenStreams,
+    localScreenStream,
+    isScreenSharing,
+    participants,
+  ])
 
   useEffect(() => {
     const el = videoRef.current
-    if (!el) return
-    el.srcObject = active?.stream ?? null
-    if (active?.stream) {
-      void el.play().catch(() => undefined)
+    if (!active?.stream) {
+      clearVideoElement(el)
+      return
     }
-  }, [active?.stream])
+    el.srcObject = active.stream
+    void el.play().catch(() => undefined)
+    return () => clearVideoElement(el)
+  }, [active])
 
   useEffect(() => {
     const el = audioRef.current
     if (!el || !active?.stream || active.muted) {
-      if (el) el.srcObject = null
+      if (el) {
+        el.pause()
+        el.srcObject = null
+      }
       return
     }
     const audioTrack = active.stream.getAudioTracks().find((t) => t.readyState === 'live')
@@ -59,6 +96,10 @@ export function ScreenShareStage() {
     }
     el.srcObject = new MediaStream([audioTrack])
     void el.play().catch(() => undefined)
+    return () => {
+      el.pause()
+      el.srcObject = null
+    }
   }, [active])
 
   if (!active) return null
@@ -72,6 +113,7 @@ export function ScreenShareStage() {
         </div>
         <div className="screen-share-stage__body">
           <video
+            key={active.key}
             ref={videoRef}
             className="screen-share-stage__video"
             autoPlay
