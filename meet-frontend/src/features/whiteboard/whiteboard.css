@@ -5,6 +5,11 @@
   height: 100%;
 }
 
+.whiteboard-module--conference-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .whiteboard-module__canvas {
   position: absolute;
   inset: 0;

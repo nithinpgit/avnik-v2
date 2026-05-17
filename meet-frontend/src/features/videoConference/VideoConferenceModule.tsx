@@ -1,5 +1,5 @@
-import type { FC } from 'react'
-import { useEffect, useState } from 'react'
+import type { CSSProperties, FC } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { MeetingStatusBanner } from '../meeting/MeetingStatusBanner'
 import { selectIsMeetingLive, selectMeetingStatus } from '../meeting/meetingLifecycleSlice'
@@ -33,6 +33,7 @@ import {
   IconUser,
   IconVideoCam,
 } from './MeetingIcons'
+import { getConferenceGridLayout } from './conferenceGrid'
 import './meeting-icons.css'
 import './meetingTooltip.css'
 import './videoConference.css'
@@ -84,6 +85,20 @@ export function VideoConferenceModule() {
     if (!meetingLive) return
     pauseMeeting()
   }
+
+  const conferenceGrid = useMemo(
+    () => getConferenceGridLayout(participants.length),
+    [participants.length],
+  )
+
+  const stageStyle = useMemo(
+    () =>
+      ({
+        '--stage-cols': conferenceGrid.cols,
+        '--stage-rows': conferenceGrid.rows,
+      }) as CSSProperties,
+    [conferenceGrid],
+  )
 
   return (
     <section
@@ -224,13 +239,16 @@ export function VideoConferenceModule() {
         </aside>
       )}
 
-      {isConferenceMode && (
-        <div className="video-stage" aria-label="Conference stage">
-          {participants.map((participant, index) => (
-            <ParticipantVideoTile key={participant.id} participant={participant} tileIndex={index} />
-          ))}
-        </div>
-      )}
+      {isConferenceMode ? (
+        <>
+          <div className="conference-backdrop" aria-hidden />
+          <div className="video-stage" style={stageStyle} aria-label="Conference stage">
+            {participants.map((participant, index) => (
+              <ParticipantVideoTile key={participant.id} participant={participant} tileIndex={index} />
+            ))}
+          </div>
+        </>
+      ) : null}
 
       <footer className="meeting-bottom-dock" aria-label="Meeting controls">
         <div className="meeting-bottom-dock__inner">

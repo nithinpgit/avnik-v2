@@ -11,6 +11,7 @@ import { useAppSelector } from '../../app/hooks'
 import { selectPreMeetingEntryCompleted } from '../preMeeting/preMeetingSlice'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
 import { selectPresentationVisible } from '../documents/documentsSlice'
+import { selectConferenceMode } from '../videoConference/videoConferenceSlice'
 import { PresentationLayer } from '../documents/PresentationLayer'
 import { selectWhiteboardTheme } from './whiteboardSlice'
 import './whiteboard.css'
@@ -28,6 +29,7 @@ const TRANSPARENT_VIEW_BG = 'transparent'
 export function WhiteboardModule() {
   const theme = useAppSelector(selectWhiteboardTheme)
   const presentationActive = useAppSelector(selectPresentationVisible)
+  const conferenceMode = useAppSelector(selectConferenceMode)
   const entryCompleted = useAppSelector(selectPreMeetingEntryCompleted)
   const whiteboardDoc = useAppSelector((s) => s.roomSync.channels[WHITEBOARD_CHANNEL])
   const { emitRoomSync } = useMeetingSocket()
@@ -136,7 +138,7 @@ export function WhiteboardModule() {
 
   return (
     <section
-      className={`whiteboard-module${presentationActive ? ' whiteboard-module--over-document' : ''}`}
+      className={`whiteboard-module${presentationActive ? ' whiteboard-module--over-document' : ''}${conferenceMode ? ' whiteboard-module--conference-hidden' : ''}`}
       aria-label="Whiteboard workspace"
     >
       <PresentationLayer />
