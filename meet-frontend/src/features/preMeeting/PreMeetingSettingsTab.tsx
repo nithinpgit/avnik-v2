@@ -18,6 +18,8 @@ type PreMeetingSettingsTabProps = {
   initialVideoDeviceId?: string | null
   initialAudioInDeviceId?: string | null
   initialAudioOutDeviceId?: string | null
+  /** Hide Webcam/Mic mode radios when reopening settings during an active meeting. */
+  hideMediaModeRadios?: boolean
 }
 
 type DeviceLists = {
@@ -52,6 +54,7 @@ export function PreMeetingSettingsTab({
   initialVideoDeviceId = null,
   initialAudioInDeviceId = null,
   initialAudioOutDeviceId = null,
+  hideMediaModeRadios = false,
 }: PreMeetingSettingsTabProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -312,26 +315,42 @@ export function PreMeetingSettingsTab({
         </div>
       </div>
 
-      <div className="webcam-radio-btns icon_settings_page">
-        <ul className="cmn-ul-list">
-          {radios.map(({ mode, label }) => (
-            <li key={mode}>
-              <div className="radio custom">
-                <label>
-                  <input
-                    type="radio"
-                    name="pre-meeting-media-mode"
-                    className="radio_button"
-                    checked={mediaMode === mode}
-                    onChange={() => setMediaMode(mode)}
-                  />{' '}
-                  {label}
-                </label>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {!hideMediaModeRadios ? (
+        <MediaModeRadios radios={radios} mediaMode={mediaMode} onModeChange={setMediaMode} />
+      ) : null}
+    </div>
+  )
+}
+
+function MediaModeRadios({
+  radios,
+  mediaMode,
+  onModeChange,
+}: {
+  radios: { mode: PreMeetingMediaMode; label: string }[]
+  mediaMode: PreMeetingMediaMode
+  onModeChange: (mode: PreMeetingMediaMode) => void
+}) {
+  return (
+    <div className="webcam-radio-btns icon_settings_page">
+      <ul className="cmn-ul-list">
+        {radios.map(({ mode, label }) => (
+          <li key={mode}>
+            <div className="radio custom">
+              <label>
+                <input
+                  type="radio"
+                  name="pre-meeting-media-mode"
+                  className="radio_button"
+                  checked={mediaMode === mode}
+                  onChange={() => onModeChange(mode)}
+                />{' '}
+                {label}
+              </label>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

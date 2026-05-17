@@ -195,6 +195,7 @@ export function PreMeetingModal() {
                       initialMediaMode={lastMediaMode}
                       initialVideoDeviceId={initialDevices.videoDeviceId}
                       initialAudioInDeviceId={initialDevices.audioInDeviceId}
+                      hideMediaModeRadios={isInMeetingSettings}
                     />
                   </div>
                   <div className="ah-tab-content" data-active={tab === 'info' ? 'true' : 'false'}>
