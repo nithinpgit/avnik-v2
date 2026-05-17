@@ -172,7 +172,7 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
       return
     }
 
-    client.to(dto.roomId).emit('room_sync', {
+    this.server.to(dto.roomId).emit('room_sync', {
       channel: dto.channel,
       payload: dto.payload,
     })

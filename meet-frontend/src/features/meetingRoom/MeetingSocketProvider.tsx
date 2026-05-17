@@ -68,12 +68,16 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
   const [presenceJoined, setPresenceJoined] = useState(false)
   const socketRef = useRef<Socket | null>(null)
 
-  const emitRoomSync = useCallback((channel: string, payload: unknown) => {
-    const s = socketRef.current
-    const rid = store.getState().meetingSession.roomId
-    if (!s?.connected || !rid) return
-    s.emit('room_sync', { roomId: rid, channel, payload })
-  }, [])
+  const emitRoomSync = useCallback(
+    (channel: string, payload: unknown) => {
+      const s = socketRef.current
+      const rid = store.getState().meetingSession.roomId
+      if (!s?.connected || !rid) return
+      dispatch(applyRoomSyncPatch({ channel, payload }))
+      s.emit('room_sync', { roomId: rid, channel, payload })
+    },
+    [dispatch],
+  )
 
   const startMeeting = useCallback(() => {
     const s = socketRef.current
@@ -178,6 +182,10 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    const onRoomSyncError = (payload: { message?: string }) => {
+      console.error('room_sync_error', payload)
+    }
+
     const onConnect = () => {
       client.emit('join_room', {
         roomId,
@@ -195,6 +203,7 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
     client.on('join_error', onJoinError)
     client.on('room_sync_bulk', onRoomSyncBulk)
     client.on('room_sync', onRoomSync)
+    client.on('room_sync_error', onRoomSyncError)
     client.on('meeting_lifecycle', onMeetingLifecycle)
     client.on('meeting_error', onMeetingError)
     client.on('role_updated', onRoleUpdated)
@@ -207,6 +216,7 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       client.off('join_error', onJoinError)
       client.off('room_sync_bulk', onRoomSyncBulk)
       client.off('room_sync', onRoomSync)
+      client.off('room_sync_error', onRoomSyncError)
       client.off('meeting_lifecycle', onMeetingLifecycle)
       client.off('meeting_error', onMeetingError)
       client.off('role_updated', onRoleUpdated)

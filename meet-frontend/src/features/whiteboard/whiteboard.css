@@ -14,6 +14,12 @@
   position: absolute;
   inset: 0;
   z-index: 2;
+  transition: opacity 0.12s ease;
+}
+
+.whiteboard-module__canvas--switching {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 /* Let shared PDF/image show through while Excalidraw stays on top for annotations */
