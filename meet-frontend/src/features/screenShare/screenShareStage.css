@@ -62,3 +62,137 @@
 .screen-share-stage__audio {
   display: none;
 }
+
+/* Local presenter: compact card (small screen preview, not full-stage mirror) */
+.meeting-content-stage--local-presenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--meeting-stage-inset, 16px) 20px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.screen-share-local-card {
+  pointer-events: auto;
+  flex-shrink: 0;
+  margin: auto;
+  width: min(calc(100% - 24px), 510px);
+  padding: 30px 33px 27px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 4px 6px rgba(15, 23, 42, 0.04),
+    0 16px 40px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+}
+
+.screen-share-local-card__preview {
+  position: relative;
+  width: 300px;
+  max-width: 100%;
+  height: 168px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #020617;
+  border: 1px solid #d8dee8;
+  margin-bottom: 24px;
+}
+
+.screen-share-local-card__video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #020617;
+}
+
+.screen-share-local-card__placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(248, 250, 252, 0.85);
+}
+
+.screen-share-local-card__live-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.35);
+  animation: screen-share-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes screen-share-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.screen-share-local-card__title {
+  margin: 0 0 9px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.screen-share-local-card__hint {
+  margin: 0 0 27px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #64748b;
+  max-width: 420px;
+}
+
+.screen-share-local-card__stop {
+  width: 100%;
+  max-width: 360px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  background: #145388;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+  box-shadow: 0 2px 8px rgba(20, 83, 136, 0.28);
+}
+
+.screen-share-local-card__stop:hover:not(:disabled) {
+  background: #0f71a3;
+  box-shadow: 0 4px 14px rgba(20, 83, 136, 0.35);
+}
+
+.screen-share-local-card__stop:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.screen-share-local-card__stop:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.screen-share-local-card__stop:focus-visible {
+  outline: 2px solid #426de5;
+  outline-offset: 2px;
+}
