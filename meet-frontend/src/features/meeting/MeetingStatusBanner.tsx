@@ -13,7 +13,7 @@ export function MeetingStatusBanner() {
   let message: string
   if (status === 'paused') {
     message = host
-      ? 'Meeting is paused. Resume when you are ready to continue.'
+      ? 'Session is in paused state. Click play to resume when you are ready.'
       : 'Host paused the meeting. Please wait until they resume.'
   } else if (status === 'ended') {
     message = 'This meeting has ended.'

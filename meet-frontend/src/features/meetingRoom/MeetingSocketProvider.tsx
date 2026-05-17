@@ -35,8 +35,10 @@ export type MeetingSocketContextValue = {
   presenceJoined: boolean
   /** Emit a persisted room document update (same contract for whiteboard and future channels). */
   emitRoomSync: (channel: string, payload: unknown) => void
-  /** Host-only: persist and broadcast meeting start. */
+  /** Host-only: persist and broadcast meeting start (also resumes from paused). */
   startMeeting: () => void
+  /** Host-only: persist and broadcast meeting pause. */
+  pauseMeeting: () => void
 }
 
 const MeetingSocketContext = createContext<MeetingSocketContextValue | null>(null)
@@ -77,6 +79,13 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
     const rid = store.getState().meetingSession.roomId
     if (!s?.connected || !rid) return
     s.emit('start_meeting', { roomId: rid })
+  }, [])
+
+  const pauseMeeting = useCallback(() => {
+    const s = socketRef.current
+    const rid = store.getState().meetingSession.roomId
+    if (!s?.connected || !rid) return
+    s.emit('pause_meeting', { roomId: rid })
   }, [])
 
   useEffect(() => {
@@ -210,8 +219,8 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
   }, [entryCompleted, roomId, userId, displayName, role, profileImage, dispatch])
 
   const value = useMemo<MeetingSocketContextValue>(
-    () => ({ socket, presenceJoined, emitRoomSync, startMeeting }),
-    [socket, presenceJoined, emitRoomSync, startMeeting],
+    () => ({ socket, presenceJoined, emitRoomSync, startMeeting, pauseMeeting }),
+    [socket, presenceJoined, emitRoomSync, startMeeting, pauseMeeting],
   )
 
   return <MeetingSocketContext.Provider value={value}>{children}</MeetingSocketContext.Provider>

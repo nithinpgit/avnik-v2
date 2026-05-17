@@ -10,12 +10,21 @@ function formatElapsed(ms: number): string {
   return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':')
 }
 
-/** `24:00:00` before start; live elapsed `HH:MM:SS` from server `startedAt` when started. */
+/** `24:00:00` before start; live elapsed when started; frozen while paused. */
 export function useMeetingElapsedLabel(): string {
-  const { status, startedAt } = useAppSelector(selectMeetingLifecycle)
+  const { status, startedAt, pausedAt } = useAppSelector(selectMeetingLifecycle)
   const [label, setLabel] = useState('24:00:00')
 
   useEffect(() => {
+    if (status === 'paused' && startedAt && pausedAt) {
+      const startedMs = Date.parse(startedAt)
+      const pausedMs = Date.parse(pausedAt)
+      if (!Number.isNaN(startedMs) && !Number.isNaN(pausedMs)) {
+        setLabel(formatElapsed(pausedMs - startedMs))
+      }
+      return
+    }
+
     if (status !== 'started' || !startedAt) {
       setLabel('24:00:00')
       return
@@ -31,7 +40,7 @@ export function useMeetingElapsedLabel(): string {
     tick()
     const id = window.setInterval(tick, 1000)
     return () => window.clearInterval(id)
-  }, [status, startedAt])
+  }, [status, startedAt, pausedAt])
 
   return label
 }

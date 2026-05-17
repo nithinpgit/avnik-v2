@@ -47,7 +47,7 @@ const dockItems: { key: string; icon: FC; label: string }[] = [
 
 export function VideoConferenceModule() {
   const dispatch = useAppDispatch()
-  const { startMeeting } = useMeetingSocket()
+  const { startMeeting, pauseMeeting } = useMeetingSocket()
   const isConferenceMode = useAppSelector(selectConferenceMode)
   const participants = useAppSelector(selectParticipants)
   const meetingStatus = useAppSelector(selectMeetingStatus)
@@ -56,7 +56,8 @@ export function VideoConferenceModule() {
   const elapsedLabel = useMeetingElapsedLabel()
   const [startingMeeting, setStartingMeeting] = useState(false)
 
-  const showHostPlay = isHost && meetingStatus === 'not_started'
+  const showHostPlay = isHost && (meetingStatus === 'not_started' || meetingStatus === 'paused')
+  const showHostPause = isHost && meetingStatus === 'started'
 
   useEffect(() => {
     if (!startingMeeting) return
@@ -64,10 +65,22 @@ export function VideoConferenceModule() {
     return () => window.clearTimeout(id)
   }, [startingMeeting])
 
-  const handleStartMeeting = () => {
-    if (startingMeeting || meetingLive) return
+  useEffect(() => {
+    if (meetingLive || meetingStatus === 'paused') {
+      setStartingMeeting(false)
+    }
+  }, [meetingLive, meetingStatus])
+
+  const handleStartOrResume = () => {
+    if (startingMeeting) return
+    if (meetingStatus !== 'not_started' && meetingStatus !== 'paused') return
     setStartingMeeting(true)
     startMeeting()
+  }
+
+  const handlePauseMeeting = () => {
+    if (!meetingLive) return
+    pauseMeeting()
   }
 
   return (
@@ -97,23 +110,28 @@ export function VideoConferenceModule() {
             <button
               type="button"
               className="cmn-cricle-btn cmn-cricle-btn--active meeting-tooltip meeting-tooltip--bottom"
-              data-tooltip="Click play button to start meeting"
-              aria-label="Start meeting"
-              disabled={startingMeeting && !meetingLive}
-              onClick={handleStartMeeting}
+              data-tooltip={
+                meetingStatus === 'paused'
+                  ? 'Click play button to resume meeting'
+                  : 'Click play button to start meeting'
+              }
+              aria-label={meetingStatus === 'paused' ? 'Resume meeting' : 'Start meeting'}
+              disabled={startingMeeting}
+              onClick={handleStartOrResume}
             >
               <span className="cmn-cricle-btn__icon" aria-hidden>
                 <IconPlay />
               </span>
             </button>
           ) : null}
-          {meetingLive && isHost ? (
+          {showHostPause ? (
             <>
               <button
                 type="button"
                 className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
                 data-tooltip="Pause"
-                aria-label="Pause"
+                aria-label="Pause meeting"
+                onClick={handlePauseMeeting}
               >
                 <span className="cmn-cricle-btn__icon" aria-hidden>
                   <IconPause />

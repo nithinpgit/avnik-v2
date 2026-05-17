@@ -178,6 +178,38 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
     })
   }
 
+  @SubscribeMessage('pause_meeting')
+  async pauseMeeting(@ConnectedSocket() client: Socket, @MessageBody() body: unknown): Promise<void> {
+    const data = client.data as SocketData
+    const roomId = typeof body === 'object' && body !== null && 'roomId' in body
+      ? String((body as { roomId: unknown }).roomId)
+      : data.roomId
+    if (!roomId || data.roomId !== roomId || !data.userId) {
+      client.emit('meeting_error', { message: 'Must join_room before pause_meeting' })
+      return
+    }
+
+    const room = this.roomsService.getRoom(roomId)
+    if (!room) {
+      client.emit('meeting_error', { message: 'Room not found' })
+      return
+    }
+
+    if (room.hostUserId !== data.userId) {
+      client.emit('meeting_error', { message: 'Only the host can pause the meeting' })
+      return
+    }
+
+    try {
+      const meeting = await this.meetingLifecycle.pauseMeeting(roomId, data.userId)
+      this.broadcastMeetingLifecycle(roomId, meeting)
+      this.logger.debug(`Meeting paused in ${roomId} by ${data.userId}`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Pause failed'
+      client.emit('meeting_error', { message: msg })
+    }
+  }
+
   @SubscribeMessage('start_meeting')
   async startMeeting(@ConnectedSocket() client: Socket, @MessageBody() body: unknown): Promise<void> {
     const data = client.data as SocketData

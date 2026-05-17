@@ -6,12 +6,14 @@ export type MeetingLifecycleState = {
   status: MeetingLifecycleStatus
   startedAt: string | null
   startedBy: string | null
+  pausedAt: string | null
 }
 
 export const DEFAULT_MEETING_LIFECYCLE: MeetingLifecycleState = {
   status: 'not_started',
   startedAt: null,
   startedBy: null,
+  pausedAt: null,
 }
 
 export function parseMeetingLifecycle(raw: unknown): MeetingLifecycleState {
@@ -25,5 +27,6 @@ export function parseMeetingLifecycle(raw: unknown): MeetingLifecycleState {
     status: valid.includes(status) ? status : 'not_started',
     startedAt: typeof o.startedAt === 'string' ? o.startedAt : null,
     startedBy: typeof o.startedBy === 'string' ? o.startedBy : null,
+    pausedAt: typeof o.pausedAt === 'string' ? o.pausedAt : null,
   }
 }

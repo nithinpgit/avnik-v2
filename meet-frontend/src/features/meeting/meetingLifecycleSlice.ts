@@ -23,6 +23,7 @@ const meetingLifecycleSlice = createSlice({
       state.status = action.payload.status
       state.startedAt = action.payload.startedAt
       state.startedBy = action.payload.startedBy
+      state.pausedAt = action.payload.pausedAt
       state.hydrated = true
     },
     resetMeetingLifecycle: () => initialState,
@@ -35,5 +36,6 @@ export const selectMeetingLifecycle = (state: RootState) => state.meetingLifecyc
 export const selectMeetingLifecycleHydrated = (state: RootState) => state.meetingLifecycle.hydrated
 export const selectMeetingStatus = (state: RootState) => state.meetingLifecycle.status
 export const selectIsMeetingLive = (state: RootState) => state.meetingLifecycle.status === 'started'
+export const selectIsMeetingPaused = (state: RootState) => state.meetingLifecycle.status === 'paused'
 
 export default meetingLifecycleSlice.reducer
