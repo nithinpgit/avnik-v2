@@ -36,13 +36,28 @@ import {
 import { MediaSignaling } from './MediaSignaling'
 import { resolveMediaWsBaseUrl } from './resolveMediaWsUrl'
 
+export type MediaTrackSource = 'camera' | 'mic' | 'screen' | 'screen-audio'
+
+type LocalProducers = {
+  audio?: Producer
+  video?: Producer
+  screenVideo?: Producer
+  screenAudio?: Producer
+}
+
 export type MediasoupMediaContextValue = {
-  /** Remote A/V per Socket.IO peer id (SFU). */
+  /** Remote camera/mic per Socket.IO peer id (SFU). */
   remoteStreams: Readonly<Record<string, MediaStream>>
+  /** Remote screen share (video + optional tab audio) per peer id. */
+  remoteScreenStreams: Readonly<Record<string, MediaStream>>
+  localScreenStream: MediaStream | null
+  isScreenSharing: boolean
   sfuStatus: 'idle' | 'connecting' | 'connected' | 'error'
   sfuError: string | null
   /** Swap camera/mic tracks on active producers without reconnecting the SFU session. */
   syncLocalMedia: (stream: MediaStream | null) => Promise<void>
+  startScreenShare: () => Promise<void>
+  stopScreenShare: () => void
 }
 
 const MediasoupMediaContext = createContext<MediasoupMediaContextValue | null>(null)
@@ -56,6 +71,16 @@ export function useMediasoupMedia(): MediasoupMediaContextValue {
 }
 
 const liveTrack = liveMediaTrack
+
+function isScreenSource(source: string): boolean {
+  return source === 'screen' || source === 'screen-audio'
+}
+
+function hasLiveScreenVideo(stream: MediaStream | undefined): boolean {
+  return Boolean(
+    stream?.getVideoTracks().some((t) => t.kind === 'video' && t.readyState === 'live'),
+  )
+}
 
 function mergeRemoteTrack(
   prev: Record<string, MediaStream>,
@@ -93,12 +118,17 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   const participants = useAppSelector(selectParticipants)
 
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
+  const [remoteScreenStreams, setRemoteScreenStreams] = useState<Record<string, MediaStream>>({})
+  const [localScreenStream, setLocalScreenStream] = useState<MediaStream | null>(null)
+  const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [sfuStatus, setSfuStatus] = useState<MediasoupMediaContextValue['sfuStatus']>('idle')
   const [sfuError, setSfuError] = useState<string | null>(null)
 
   const teardownRef = useRef<(() => void) | null>(null)
-  const producersRef = useRef<{ audio?: Producer; video?: Producer }>({})
+  const producersRef = useRef<LocalProducers>({})
   const sendTransportRef = useRef<Transport | null>(null)
+  const screenStreamRef = useRef<MediaStream | null>(null)
+  const stopScreenShareRef = useRef<() => void>(() => undefined)
 
   const syncLocalMedia = useCallback(async (stream: MediaStream | null) => {
     const producers = producersRef.current
@@ -117,7 +147,10 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     } else if (pubVideo && sendTransport) {
       const vt = liveTrack(stream, 'video')
       if (vt) {
-        producersRef.current.video = await sendTransport.produce({ track: vt })
+        producersRef.current.video = await sendTransport.produce({
+          track: vt,
+          appData: { source: 'camera' },
+        })
       }
     }
 
@@ -131,18 +164,103 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     } else if (pubAudio && sendTransport) {
       const at = liveTrack(stream, 'audio')
       if (at) {
-        producersRef.current.audio = await sendTransport.produce({ track: at })
+        producersRef.current.audio = await sendTransport.produce({
+          track: at,
+          appData: { source: 'mic' },
+        })
       }
     }
   }, [])
+
+  const stopScreenShare = useCallback(() => {
+    const producers = producersRef.current
+    try {
+      producers.screenVideo?.close()
+    } catch {
+      /* ignore */
+    }
+    try {
+      producers.screenAudio?.close()
+    } catch {
+      /* ignore */
+    }
+    delete producers.screenVideo
+    delete producers.screenAudio
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop())
+    screenStreamRef.current = null
+    setLocalScreenStream(null)
+    setIsScreenSharing(false)
+  }, [])
+
+  stopScreenShareRef.current = stopScreenShare
+
+  const startScreenShare = useCallback(async () => {
+    if (isScreenSharing) {
+      stopScreenShare()
+      return
+    }
+    const sendTransport = sendTransportRef.current
+    if (!sendTransport || sfuStatus !== 'connected') {
+      throw new Error('Connect to the meeting before sharing your screen')
+    }
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: true,
+    })
+    const videoTrack = stream.getVideoTracks()[0]
+    if (!videoTrack) {
+      stream.getTracks().forEach((t) => t.stop())
+      throw new Error('No screen video track')
+    }
+    screenStreamRef.current = stream
+    videoTrack.onended = () => stopScreenShareRef.current()
+
+    const producers = producersRef.current
+    producers.screenVideo = await sendTransport.produce({
+      track: videoTrack,
+      appData: { source: 'screen' },
+    })
+
+    const audioTrack = stream.getAudioTracks()[0]
+    if (audioTrack) {
+      producers.screenAudio = await sendTransport.produce({
+        track: audioTrack,
+        appData: { source: 'screen-audio' },
+      })
+    }
+
+    const previewTracks = [videoTrack, ...(audioTrack ? [audioTrack] : [])]
+    setLocalScreenStream(new MediaStream(previewTracks))
+    setIsScreenSharing(true)
+  }, [isScreenSharing, sfuStatus, stopScreenShare])
 
   const upsertRemote = useCallback((producerPeerId: string, track: MediaStreamTrack) => {
     setRemoteStreams((prev) => mergeRemoteTrack(prev, producerPeerId, track))
   }, [])
 
+  const upsertRemoteScreen = useCallback((producerPeerId: string, track: MediaStreamTrack) => {
+    setRemoteScreenStreams((prev) => mergeRemoteTrack(prev, producerPeerId, track))
+  }, [])
+
+  useEffect(() => {
+    setRemoteScreenStreams((prev) => {
+      let changed = false
+      const next = { ...prev }
+      for (const [peerId, stream] of Object.entries(prev)) {
+        if (hasLiveScreenVideo(stream)) continue
+        for (const t of stream.getTracks()) {
+          t.stop()
+        }
+        delete next[peerId]
+        changed = true
+      }
+      return changed ? next : prev
+    })
+  }, [remoteScreenStreams])
+
   useEffect(() => {
     const ids = new Set(participants.map((p) => p.id))
-    setRemoteStreams((prev) => {
+    const prune = (prev: Record<string, MediaStream>) => {
       let changed = false
       const next = { ...prev }
       for (const id of Object.keys(next)) {
@@ -155,7 +273,9 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
         }
       }
       return changed ? next : prev
-    })
+    }
+    setRemoteStreams(prune)
+    setRemoteScreenStreams(prune)
   }, [participants])
 
   useEffect(() => {
@@ -177,17 +297,30 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false
     const consumers = new Map<string, Consumer>()
-    const producers: { audio?: Producer; video?: Producer } = {}
+    const producers: LocalProducers = {}
     let sendTransport: Transport | null = null
     let recvTransport: Transport | null = null
     let sig: MediaSignaling | null = null
     let ws: WebSocket | null = null
-    let unlistenNewProducer: (() => void) | null = null
+    let unlistenSignalingPush: (() => void) | null = null
+
+    const dropRemoteScreenPeer = (peerId: string) => {
+      setRemoteScreenStreams((prev) => {
+        const stream = prev[peerId]
+        if (!stream) return prev
+        const next = { ...prev }
+        for (const t of stream.getTracks()) {
+          t.stop()
+        }
+        delete next[peerId]
+        return next
+      })
+    }
 
     const teardown = () => {
       cancelled = true
-      unlistenNewProducer?.()
-      unlistenNewProducer = null
+      unlistenSignalingPush?.()
+      unlistenSignalingPush = null
       for (const c of consumers.values()) {
         try {
           c.close()
@@ -206,6 +339,17 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       } catch {
         /* ignore */
       }
+      try {
+        producers.screenVideo?.close()
+      } catch {
+        /* ignore */
+      }
+      try {
+        producers.screenAudio?.close()
+      } catch {
+        /* ignore */
+      }
+      stopScreenShareRef.current()
       try {
         sendTransport?.close()
       } catch {
@@ -229,6 +373,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       }
       ws = null
       setRemoteStreams({})
+      setRemoteScreenStreams({})
     }
 
     teardownRef.current?.()
@@ -236,24 +381,74 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
 
     const consumedProducerIds = new Set<string>()
 
+    const releaseProducer = (
+      producerId: string,
+      producerPeerId: string,
+      source: string,
+      track?: MediaStreamTrack,
+    ) => {
+      for (const [consumerId, consumer] of consumers) {
+        if (consumer.producerId !== producerId) continue
+        try {
+          consumer.close()
+        } catch {
+          /* ignore */
+        }
+        consumers.delete(consumerId)
+      }
+      consumedProducerIds.delete(producerId)
+
+      if (!isScreenSource(source)) return
+
+      if (source === 'screen') {
+        dropRemoteScreenPeer(producerPeerId)
+        return
+      }
+
+      if (!track) return
+      setRemoteScreenStreams((prev) => {
+        const existing = prev[producerPeerId]
+        if (!existing) return prev
+        const next = { ...prev }
+        if (existing.getTracks().includes(track)) {
+          existing.removeTrack(track)
+          track.stop()
+        }
+        if (!hasLiveScreenVideo(existing)) {
+          for (const t of existing.getTracks()) {
+            t.stop()
+          }
+          delete next[producerPeerId]
+        }
+        return next
+      })
+    }
+
     async function consumeProducer(
       device: Device,
       recvT: Transport,
       signaling: MediaSignaling,
       producerId: string,
+      sourceHint?: string,
     ): Promise<void> {
       if (cancelled) return
       if (consumedProducerIds.has(producerId)) return
-      const data = (await signaling.request('consume', {
-        transportId: recvT.id,
-        producerId,
-        rtpCapabilities: device.rtpCapabilities,
-      })) as {
+      let data: {
         id: string
         producerPeerId: string
         kind: 'audio' | 'video'
         rtpParameters: unknown
         producerId: string
+        source?: string
+      }
+      try {
+        data = (await signaling.request('consume', {
+        transportId: recvT.id,
+        producerId,
+          rtpCapabilities: device.rtpCapabilities,
+        })) as typeof data
+      } catch {
+        return
       }
       if (cancelled) return
       const consumer = await recvT.consume({
@@ -266,10 +461,24 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       await signaling.request('resumeConsumer', { consumerId: consumer.id })
       if (cancelled) return
       consumedProducerIds.add(producerId)
-      upsertRemote(data.producerPeerId, consumer.track)
-      consumer.on('trackended', () => {
-        consumers.delete(consumer.id)
-      })
+      const source =
+        data.source ?? sourceHint ?? (data.kind === 'audio' ? 'mic' : 'camera')
+      if (isScreenSource(source)) {
+        upsertRemoteScreen(data.producerPeerId, consumer.track)
+        if (source === 'screen') {
+          consumer.track.addEventListener('ended', () => {
+            dropRemoteScreenPeer(data.producerPeerId)
+          })
+        }
+      } else {
+        upsertRemote(data.producerPeerId, consumer.track)
+      }
+
+      const release = () => {
+        releaseProducer(producerId, data.producerPeerId, source, consumer.track)
+      }
+      consumer.on('trackended', release)
+      consumer.on('producerclose', release)
     }
 
     async function run(): Promise<void> {
@@ -404,33 +613,50 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
         if (pubVideo) {
           const vt = liveTrack(stream, 'video')
           if (vt) {
-            const p = await sendTransport.produce({ track: vt })
+            const p = await sendTransport.produce({ track: vt, appData: { source: 'camera' } })
             producers.video = p
           }
         }
         if (pubAudio) {
           const at = liveTrack(stream, 'audio')
           if (at) {
-            const p = await sendTransport.produce({ track: at })
+            const p = await sendTransport.produce({ track: at, appData: { source: 'mic' } })
             producers.audio = p
           }
         }
         producersRef.current = producers
 
         const list = (await signaling.request('listProducers')) as {
-          producers: { peerId: string; producerId: string; kind: string }[]
+          producers: { peerId: string; producerId: string; kind: string; source?: string }[]
         }
         for (const row of list.producers ?? []) {
           if (cancelled) return
           if (row.peerId === userId) continue
-          await consumeProducer(device, recvT, signaling, row.producerId)
+          if (isScreenSource(row.source ?? '') && row.kind === 'audio') {
+            const hasScreenVideo = (list.producers ?? []).some(
+              (p) => p.peerId === row.peerId && p.source === 'screen',
+            )
+            if (!hasScreenVideo) continue
+          }
+          await consumeProducer(device, recvT, signaling, row.producerId, row.source)
         }
 
-        unlistenNewProducer = signaling.onPush((msg) => {
-          if (msg.t !== 'newProducer') return
-          const d = msg.data as { peerId?: string; producerId?: string }
-          if (!d.producerId || d.peerId === userId) return
-          void consumeProducer(device, recvT, signaling, d.producerId)
+        unlistenSignalingPush = signaling.onPush((msg) => {
+          if (msg.t === 'newProducer') {
+            const d = msg.data as { peerId?: string; producerId?: string; source?: string }
+            if (!d.producerId || d.peerId === userId) return
+            void consumeProducer(device, recvT, signaling, d.producerId, d.source)
+            return
+          }
+          if (msg.t === 'producerClosed') {
+            const d = msg.data as {
+              peerId?: string
+              producerId?: string
+              source?: string
+            }
+            if (!d.producerId || !d.peerId) return
+            releaseProducer(d.producerId, d.peerId, d.source ?? 'camera')
+          }
         })
 
         if (!cancelled) {
@@ -463,16 +689,32 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     displayName,
     lastMediaMode,
     upsertRemote,
+    upsertRemoteScreen,
   ])
 
   const value = useMemo<MediasoupMediaContextValue>(
     () => ({
       remoteStreams,
+      remoteScreenStreams,
+      localScreenStream,
+      isScreenSharing,
       sfuStatus,
       sfuError,
       syncLocalMedia,
+      startScreenShare,
+      stopScreenShare,
     }),
-    [remoteStreams, sfuStatus, sfuError, syncLocalMedia],
+    [
+      remoteStreams,
+      remoteScreenStreams,
+      localScreenStream,
+      isScreenSharing,
+      sfuStatus,
+      sfuError,
+      syncLocalMedia,
+      startScreenShare,
+      stopScreenShare,
+    ],
   )
 
   return <MediasoupMediaContext.Provider value={value}>{children}</MediasoupMediaContext.Provider>

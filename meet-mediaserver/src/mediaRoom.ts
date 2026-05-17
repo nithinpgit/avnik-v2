@@ -131,6 +131,12 @@ export class MediaRoom {
     await t.connect({ dtlsParameters })
   }
 
+  private producerSource(producer: Producer): string {
+    const src = (producer.appData as { source?: string } | undefined)?.source
+    if (typeof src === 'string' && src.length > 0) return src
+    return producer.kind === 'audio' ? 'mic' : 'camera'
+  }
+
   async produce(
     peerId: string,
     transportId: string,
@@ -142,33 +148,67 @@ export class MediaRoom {
     if (!peer) throw new Error('peer not found')
     if (peer.sendTransport?.id !== transportId) throw new Error('wrong send transport')
 
-    for (const [pid, prod] of peer.producers) {
-      if (prod.kind === kind) {
+    const source =
+      typeof appData.source === 'string' && appData.source.length > 0
+        ? appData.source
+        : kind === 'audio'
+          ? 'mic'
+          : 'camera'
+
+    for (const [, prod] of peer.producers) {
+      if (prod.kind === kind && this.producerSource(prod) === source) {
         prod.close()
-        peer.producers.delete(pid)
       }
     }
 
     const producer = await peer.sendTransport.produce({
       kind,
       rtpParameters,
-      appData: { ...appData, peerId },
+      appData: { ...appData, source, peerId },
     })
     peer.producers.set(producer.id, producer)
 
-    producer.on('transportclose', () => {
-      peer.producers.delete(producer.id)
+    producer.observer.on('close', () => {
+      if (!peer.producers.delete(producer.id)) return
+      this.broadcastProducerClosed(peerId, producer.id, kind, source)
     })
 
-    this.broadcastNewProducer(peerId, producer.id, kind)
+    producer.on('transportclose', () => {
+      if (peer.producers.delete(producer.id)) {
+        this.broadcastProducerClosed(peerId, producer.id, kind, source)
+      }
+    })
+
+    this.broadcastNewProducer(peerId, producer.id, kind, source)
 
     return { id: producer.id }
   }
 
-  private broadcastNewProducer(fromPeerId: string, producerId: string, kind: 'audio' | 'video'): void {
+  private broadcastNewProducer(
+    fromPeerId: string,
+    producerId: string,
+    kind: 'audio' | 'video',
+    source: string,
+  ): void {
     const msg = {
       t: 'newProducer',
-      data: { peerId: fromPeerId, producerId, kind },
+      data: { peerId: fromPeerId, producerId, kind, source },
+    }
+    for (const [pid, peer] of this.peers) {
+      if (pid === fromPeerId) continue
+      peer.send(msg)
+    }
+  }
+
+  private broadcastProducerClosed(
+    fromPeerId: string,
+    producerId: string,
+    kind: 'audio' | 'video',
+    source: string,
+  ): void {
+    const msg = {
+      t: 'producerClosed',
+      data: { peerId: fromPeerId, producerId, kind, source },
     }
     for (const [pid, peer] of this.peers) {
       if (pid === fromPeerId) continue
@@ -184,12 +224,19 @@ export class MediaRoom {
     return undefined
   }
 
-  listProducerMetaForPeer(exceptPeerId: string): { peerId: string; producerId: string; kind: 'audio' | 'video' }[] {
-    const out: { peerId: string; producerId: string; kind: 'audio' | 'video' }[] = []
+  listProducerMetaForPeer(
+    exceptPeerId: string,
+  ): { peerId: string; producerId: string; kind: 'audio' | 'video'; source: string }[] {
+    const out: { peerId: string; producerId: string; kind: 'audio' | 'video'; source: string }[] = []
     for (const [peerId, peer] of this.peers) {
       if (peerId === exceptPeerId) continue
       for (const prod of peer.producers.values()) {
-        out.push({ peerId, producerId: prod.id, kind: prod.kind as 'audio' | 'video' })
+        out.push({
+          peerId,
+          producerId: prod.id,
+          kind: prod.kind as 'audio' | 'video',
+          source: this.producerSource(prod),
+        })
       }
     }
     return out
@@ -206,6 +253,7 @@ export class MediaRoom {
     kind: 'audio' | 'video'
     rtpParameters: RtpParameters
     producerId: string
+    source: string
   }> {
     const peer = this.peers.get(peerId)
     if (!peer) throw new Error('peer not found')
@@ -236,6 +284,7 @@ export class MediaRoom {
       kind: consumer.kind as 'audio' | 'video',
       rtpParameters: consumer.rtpParameters,
       producerId,
+      source: this.producerSource(found.producer),
     }
   }
 

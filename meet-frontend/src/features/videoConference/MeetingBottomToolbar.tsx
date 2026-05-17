@@ -7,6 +7,7 @@ import {
   selectPresentationVisible,
 } from '../documents/documentsSlice'
 import { pushToast } from '../documents/notificationsSlice'
+import { useMediasoupMedia } from '../mediasoup/MediasoupMediaProvider'
 import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
 import {
   IconAllMicOff,
@@ -33,10 +34,12 @@ function toggleLocalTrack(kind: 'audio' | 'video'): boolean {
 export function MeetingBottomToolbar() {
   const dispatch = useAppDispatch()
   const isHost = useIsMeetingHost()
+  const { isScreenSharing, startScreenShare } = useMediasoupMedia()
   const presentationActive = useAppSelector(selectPresentationVisible)
   const [micOn, setMicOn] = useState(true)
   const [camOn, setCamOn] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [screenShareBusy, setScreenShareBusy] = useState(false)
 
   const notifySoon = useCallback(
     (label: string) => {
@@ -69,6 +72,56 @@ export function MeetingBottomToolbar() {
     )
   }
 
+  const handleScreenShare = () => {
+    if (screenShareBusy) return
+    const wasSharing = isScreenSharing
+    setScreenShareBusy(true)
+    void startScreenShare()
+      .then(() => {
+        if (!wasSharing) {
+          dispatch(
+            pushToast({
+              message: 'Screen sharing started',
+              variant: 'success',
+              durationMs: 2500,
+            }),
+          )
+        } else {
+          dispatch(
+            pushToast({
+              message: 'Screen sharing stopped',
+              variant: 'info',
+              durationMs: 2000,
+            }),
+          )
+        }
+      })
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : String(e)
+        if (message.includes('Permission denied') || message.includes('NotAllowedError')) {
+          dispatch(
+            pushToast({
+              message: 'Screen share permission denied',
+              variant: 'info',
+              durationMs: 3500,
+            }),
+          )
+          return
+        }
+        if (message.includes('AbortError') || message.includes('cancel')) {
+          return
+        }
+        dispatch(
+          pushToast({
+            message: message || 'Could not start screen share',
+            variant: 'error',
+            durationMs: 4000,
+          }),
+        )
+      })
+      .finally(() => setScreenShareBusy(false))
+  }
+
   const handleFullscreen = () => {
     if (!document.fullscreenElement) {
       void document.documentElement.requestFullscreen().then(() => setIsFullscreen(true))
@@ -84,10 +137,12 @@ export function MeetingBottomToolbar() {
           <li className="dock-toolbar-section dock-toolbar-section--share share-doc-video-bx">
             <button
               type="button"
-              className="dock-btn meeting-tooltip meeting-tooltip--top"
-              data-tooltip="Screen Share"
-              aria-label="Screen share"
-              onClick={() => notifySoon('Screen share')}
+              className={`dock-btn meeting-tooltip meeting-tooltip--top${isScreenSharing ? ' dock-btn--active' : ''}`}
+              data-tooltip={isScreenSharing ? 'Stop screen share' : 'Screen Share'}
+              aria-label={isScreenSharing ? 'Stop screen share' : 'Screen share'}
+              aria-pressed={isScreenSharing}
+              disabled={screenShareBusy}
+              onClick={handleScreenShare}
             >
               <IconScreenShare />
             </button>

@@ -3,6 +3,14 @@
   inset: 0;
   pointer-events: none;
   z-index: 20;
+  --meeting-topbar-height: 52px;
+  --meeting-sidebar-width: 260px;
+  --meeting-dock-offset: 15px;
+  --meeting-dock-height: 56px;
+  --meeting-stage-inset: 16px;
+  --meeting-stage-bottom: calc(
+    var(--meeting-dock-offset) + var(--meeting-dock-height) + var(--meeting-stage-inset)
+  );
 }
 
 .meeting-topbar {
@@ -171,9 +179,9 @@
 
 .video-sidebar {
   position: absolute;
-  top: 52px;
+  top: var(--meeting-topbar-height, 52px);
   right: 0;
-  width: 260px;
+  width: var(--meeting-sidebar-width, 260px);
   height: calc(100% - 112px);
   background: #ffffff;
   border-left: 1px solid #dce1e6;
@@ -181,6 +189,7 @@
   flex-direction: column;
   pointer-events: auto;
   box-shadow: -4px 0 24px rgba(15, 23, 42, 0.06);
+  z-index: 28;
 }
 
 .meeting-status-banner {
@@ -237,13 +246,27 @@
 
 /* Conference layout: reserve space for top bar + bottom dock (mirrored margins) */
 .video-conference.conference {
-  --meeting-topbar-height: 52px;
   --meeting-stage-inset: 16px;
-  --meeting-dock-offset: 15px;
-  --meeting-dock-height: 56px;
-  --meeting-stage-bottom: calc(
-    var(--meeting-dock-offset) + var(--meeting-dock-height) + var(--meeting-stage-inset)
-  );
+}
+
+/* Same bounds as conference .video-stage — used for screen share (and similar overlays) */
+.meeting-content-stage {
+  position: absolute;
+  top: var(--meeting-topbar-height, 52px);
+  left: 0;
+  right: 0;
+  bottom: var(--meeting-stage-bottom, 87px);
+  z-index: 25;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  padding: var(--meeting-stage-inset, 16px) 20px;
+}
+
+.video-conference.normal .meeting-content-stage {
+  right: var(--meeting-sidebar-width, 260px);
 }
 
 /* Solid panel over whiteboard when conference layout is active */
