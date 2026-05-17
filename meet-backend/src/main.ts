@@ -1,11 +1,14 @@
 import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
+import { NestExpressApplication } from '@nestjs/platform-express'
 import { IoAdapter } from '@nestjs/platform-socket.io'
+import { existsSync, mkdirSync } from 'fs'
 import helmet from 'helmet'
+import { join } from 'path'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true })
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true })
 
   app.useWebSocketAdapter(new IoAdapter(app))
   app.use(
@@ -21,6 +24,12 @@ async function bootstrap() {
     origin: corsOrigins,
     credentials: true,
   })
+
+  const uploadDir = process.env.UPLOAD_DIR?.trim() || join(process.cwd(), 'uploads')
+  if (!existsSync(uploadDir)) {
+    mkdirSync(uploadDir, { recursive: true })
+  }
+  app.useStaticAssets(uploadDir, { prefix: '/uploads/' })
 
   app.useGlobalPipes(
     new ValidationPipe({

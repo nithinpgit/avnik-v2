@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { ChatMessageEntity } from '../chat/entities/chat-message.entity'
 import { ChatMessageReadEntity } from '../chat/entities/chat-message-read.entity'
+import { RoomFileEntity } from '../files/entities/room-file.entity'
 
 function databaseUrl(): string {
   if (process.env.DATABASE_URL?.trim()) {
@@ -20,7 +21,7 @@ function databaseUrl(): string {
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: databaseUrl(),
-      entities: [ChatMessageEntity, ChatMessageReadEntity],
+      entities: [ChatMessageEntity, ChatMessageReadEntity, RoomFileEntity],
       synchronize:
         process.env.DATABASE_SYNC === 'true' ||
         (process.env.DATABASE_SYNC !== 'false' && process.env.NODE_ENV !== 'production'),

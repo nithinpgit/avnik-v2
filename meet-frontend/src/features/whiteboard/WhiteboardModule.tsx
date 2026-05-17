@@ -11,6 +11,7 @@ import { useAppSelector } from '../../app/hooks'
 import { selectPreMeetingEntryCompleted } from '../preMeeting/preMeetingSlice'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
 import { selectWhiteboardTheme } from './whiteboardSlice'
+import { PresentationLayer } from '../documents/PresentationLayer'
 import './whiteboard.css'
 
 const WHITEBOARD_CHANNEL = 'whiteboard'
@@ -99,6 +100,8 @@ export function WhiteboardModule() {
 
   return (
     <section className="whiteboard-module" aria-label="Whiteboard workspace">
+      <PresentationLayer />
+      <div className="whiteboard-module__canvas">
       <Excalidraw
         theme={theme}
         initialData={{
@@ -114,6 +117,7 @@ export function WhiteboardModule() {
           schedulePush(elements, appState, files)
         }}
       />
+      </div>
     </section>
   )
 }

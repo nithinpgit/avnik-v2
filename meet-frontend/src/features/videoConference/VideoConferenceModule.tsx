@@ -6,6 +6,8 @@ import { selectIsMeetingLive, selectMeetingStatus } from '../meeting/meetingLife
 import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
 import { useMeetingElapsedLabel } from '../meeting/useMeetingElapsedLabel'
 import { openPreMeetingSettings } from '../preMeeting/preMeetingSlice'
+import { DocumentToolbar } from '../documents/DocumentToolbar'
+import { openShareDocumentModal } from '../documents/documentsSlice'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
 import { LocalCameraManager } from './LocalCameraManager'
 import { ParticipantVideoTile } from './ParticipantVideoTile'
@@ -232,6 +234,7 @@ export function VideoConferenceModule() {
 
       <footer className="meeting-bottom-dock" aria-label="Meeting controls">
         <div className="meeting-bottom-dock__inner">
+          <DocumentToolbar />
           {dockItems.map(({ key, icon: Icon, label }) => (
             <button
               key={key}
@@ -239,6 +242,7 @@ export function VideoConferenceModule() {
               className="dock-btn meeting-tooltip meeting-tooltip--top"
               data-tooltip={label}
               aria-label={label}
+              onClick={key === 'files' ? () => dispatch(openShareDocumentModal()) : undefined}
             >
               <Icon />
             </button>

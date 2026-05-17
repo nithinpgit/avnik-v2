@@ -21,6 +21,7 @@ import {
   type MeetingRole,
 } from '../meetingSession/meetingSessionSlice'
 import { selectPreMeetingEntryCompleted } from '../preMeeting/preMeetingSlice'
+import { resetDocuments } from '../documents/documentsSlice'
 import { applyRoomSyncBulk, applyRoomSyncPatch, resetRoomSync } from '../roomSync/roomSyncSlice'
 import {
   applyRoomSnapshot,
@@ -214,6 +215,7 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       setSocket(null)
       setPresenceJoined(false)
       dispatch(resetRoomSync())
+      dispatch(resetDocuments())
       dispatch(resetMeetingLifecycle())
     }
   }, [entryCompleted, roomId, userId, displayName, role, profileImage, dispatch])

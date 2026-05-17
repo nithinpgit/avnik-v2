@@ -44,6 +44,9 @@ services:
       REDIS_URL: redis://redis:6379
       DATABASE_URL: postgres://${POSTGRES_USER:-meet}:${POSTGRES_PASSWORD:-meet}@postgres:5432/${POSTGRES_DB:-meet}
       DATABASE_SYNC: ${DATABASE_SYNC:-false}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - meet_uploads_data_prod:/app/uploads
     expose:
       - "3000"
     depends_on:
@@ -84,5 +87,6 @@ services:
       - meet-mediaserver
 
 volumes:
+  meet_uploads_data_prod:
   meet_redis_data_prod:
   meet_postgres_data_prod:
