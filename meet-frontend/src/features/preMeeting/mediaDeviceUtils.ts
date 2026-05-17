@@ -26,6 +26,32 @@ export function mediaConstraintsFor(
   return { video, audio }
 }
 
+export function liveMediaTrack(
+  stream: MediaStream | null | undefined,
+  kind: 'audio' | 'video',
+): MediaStreamTrack | undefined {
+  return stream?.getTracks().find((t) => t.kind === kind && t.readyState === 'live')
+}
+
+/** True when the stream has live tracks required for the chosen media mode. */
+export function localStreamMeetsMode(
+  stream: MediaStream | null | undefined,
+  mode: PreMeetingMediaMode,
+): boolean {
+  if (mode === 'none') {
+    return true
+  }
+  const wantVideo = mode === 'webcam_only' || mode === 'both'
+  const wantAudio = mode === 'mic_only' || mode === 'both'
+  if (wantVideo && !liveMediaTrack(stream, 'video')) {
+    return false
+  }
+  if (wantAudio && !liveMediaTrack(stream, 'audio')) {
+    return false
+  }
+  return true
+}
+
 export function deviceIdsFromStream(stream: MediaStream | null): {
   videoDeviceId: string
   audioInDeviceId: string

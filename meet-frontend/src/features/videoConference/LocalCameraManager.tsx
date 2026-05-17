@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
-import { mediaConstraintsFor } from '../preMeeting/mediaDeviceUtils'
+import { localStreamMeetsMode, mediaConstraintsFor } from '../preMeeting/mediaDeviceUtils'
 import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
 import {
   selectPreMeetingEntryCompleted,
@@ -17,8 +17,8 @@ import {
 } from './videoConferenceSlice'
 
 /**
- * Ensures a local MediaStream exists for the meeting when pre-meeting did not leave one
- * (e.g. user skipped device preview). Constraints follow `lastMediaMode` and saved device ids.
+ * Ensures a local MediaStream with live tracks exists while the meeting is live.
+ * Re-acquires devices after pause/resume when tracks were stopped or ended.
  */
 export function LocalCameraManager() {
   const dispatch = useAppDispatch()
@@ -33,11 +33,16 @@ export function LocalCameraManager() {
     if (preMeetingOpen || !entryCompleted || !meetingLive) {
       return
     }
-    if (store.getState().videoConference.localStream) {
+
+    const mode = lastMediaMode ?? 'none'
+    const existing = store.getState().videoConference.localStream
+
+    if (localStreamMeetsMode(existing, mode)) {
       return
     }
 
-    const mode = lastMediaMode ?? 'none'
+    existing?.getTracks().forEach((t) => t.stop())
+    dispatch(setLocalStream(null))
 
     if (mode === 'none') {
       dispatch(setCameraStatus('idle'))
@@ -87,9 +92,6 @@ export function LocalCameraManager() {
     return () => {
       cancelled = true
       stream?.getTracks().forEach((t) => t.stop())
-      dispatch(setLocalStream(null))
-      dispatch(setCameraStatus('idle'))
-      dispatch(setCameraErrorMessage(null))
     }
   }, [
     preMeetingOpen,

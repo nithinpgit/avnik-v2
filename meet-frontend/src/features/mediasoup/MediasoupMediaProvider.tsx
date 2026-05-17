@@ -26,9 +26,13 @@ import {
   selectMeetingRoomId,
   selectMeetingUserId,
 } from '../meetingSession/meetingSessionSlice'
-import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
+import { selectIsMeetingLive, selectSfuSessionKey } from '../meeting/meetingLifecycleSlice'
+import { liveMediaTrack } from '../preMeeting/mediaDeviceUtils'
 import { selectPreMeetingLastMediaMode } from '../preMeeting/preMeetingSlice'
-import { selectParticipants } from '../videoConference/videoConferenceSlice'
+import {
+  selectLocalStream,
+  selectParticipants,
+} from '../videoConference/videoConferenceSlice'
 import { MediaSignaling } from './MediaSignaling'
 import { resolveMediaWsBaseUrl } from './resolveMediaWsUrl'
 
@@ -51,9 +55,7 @@ export function useMediasoupMedia(): MediasoupMediaContextValue {
   return ctx
 }
 
-function liveTrack(stream: MediaStream | null, kind: 'audio' | 'video'): MediaStreamTrack | undefined {
-  return stream?.getTracks().find((t) => t.kind === kind && t.readyState === 'live')
-}
+const liveTrack = liveMediaTrack
 
 function mergeRemoteTrack(
   prev: Record<string, MediaStream>,
@@ -82,6 +84,8 @@ function mergeRemoteTrack(
 export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   const { presenceJoined } = useMeetingSocket()
   const meetingLive = useAppSelector(selectIsMeetingLive)
+  const sfuSessionKey = useAppSelector(selectSfuSessionKey)
+  const localStream = useAppSelector(selectLocalStream)
   const roomId = useAppSelector(selectMeetingRoomId)
   const userId = useAppSelector(selectMeetingUserId)
   const displayName = useAppSelector(selectMeetingDisplayName)
@@ -159,11 +163,11 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const stream = store.getState().videoConference.localStream
-    const wantsVideoPub = lastMediaMode === 'both' || lastMediaMode === 'webcam_only'
-    const wantsAudioPub = lastMediaMode === 'both' || lastMediaMode === 'mic_only'
-    const canPublishVideo = !wantsVideoPub || Boolean(liveTrack(stream, 'video'))
-    const canPublishAudio = !wantsAudioPub || Boolean(liveTrack(stream, 'audio'))
+    const mode = lastMediaMode ?? 'both'
+    const wantsVideoPub = mode === 'both' || mode === 'webcam_only'
+    const wantsAudioPub = mode === 'both' || mode === 'mic_only'
+    const canPublishVideo = !wantsVideoPub || Boolean(liveTrack(localStream, 'video'))
+    const canPublishAudio = !wantsAudioPub || Boolean(liveTrack(localStream, 'audio'))
 
     if (wantsVideoPub || wantsAudioPub) {
       if (!canPublishVideo || !canPublishAudio) {
@@ -392,10 +396,10 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
         )
 
         const stream = store.getState().videoConference.localStream
-        const mode = store.getState().preMeeting.lastMediaMode
+        const publishMode = store.getState().preMeeting.lastMediaMode ?? 'both'
 
-        const pubVideo = mode === 'both' || mode === 'webcam_only'
-        const pubAudio = mode === 'both' || mode === 'mic_only'
+        const pubVideo = publishMode === 'both' || publishMode === 'webcam_only'
+        const pubAudio = publishMode === 'both' || publishMode === 'mic_only'
 
         if (pubVideo) {
           const vt = liveTrack(stream, 'video')
@@ -449,7 +453,17 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       setSfuStatus('idle')
       setSfuError(null)
     }
-  }, [presenceJoined, meetingLive, roomId, userId, displayName, lastMediaMode, upsertRemote])
+  }, [
+    presenceJoined,
+    meetingLive,
+    sfuSessionKey,
+    localStream,
+    roomId,
+    userId,
+    displayName,
+    lastMediaMode,
+    upsertRemote,
+  ])
 
   const value = useMemo<MediasoupMediaContextValue>(
     () => ({
