@@ -28,7 +28,7 @@ import {
 } from '../meetingSession/meetingSessionSlice'
 import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
 import { selectPreMeetingLastMediaMode } from '../preMeeting/preMeetingSlice'
-import { selectLocalStream, selectParticipants } from '../videoConference/videoConferenceSlice'
+import { selectParticipants } from '../videoConference/videoConferenceSlice'
 import { MediaSignaling } from './MediaSignaling'
 import { resolveMediaWsBaseUrl } from './resolveMediaWsUrl'
 
@@ -37,6 +37,8 @@ export type MediasoupMediaContextValue = {
   remoteStreams: Readonly<Record<string, MediaStream>>
   sfuStatus: 'idle' | 'connecting' | 'connected' | 'error'
   sfuError: string | null
+  /** Swap camera/mic tracks on active producers without reconnecting the SFU session. */
+  syncLocalMedia: (stream: MediaStream | null) => Promise<void>
 }
 
 const MediasoupMediaContext = createContext<MediasoupMediaContextValue | null>(null)
@@ -83,7 +85,6 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   const roomId = useAppSelector(selectMeetingRoomId)
   const userId = useAppSelector(selectMeetingUserId)
   const displayName = useAppSelector(selectMeetingDisplayName)
-  const localStream = useAppSelector(selectLocalStream)
   const lastMediaMode = useAppSelector(selectPreMeetingLastMediaMode)
   const participants = useAppSelector(selectParticipants)
 
@@ -92,6 +93,44 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   const [sfuError, setSfuError] = useState<string | null>(null)
 
   const teardownRef = useRef<(() => void) | null>(null)
+  const producersRef = useRef<{ audio?: Producer; video?: Producer }>({})
+  const sendTransportRef = useRef<Transport | null>(null)
+
+  const syncLocalMedia = useCallback(async (stream: MediaStream | null) => {
+    const producers = producersRef.current
+    const sendTransport = sendTransportRef.current
+    const mode = store.getState().preMeeting.lastMediaMode ?? 'both'
+    const pubVideo = mode === 'both' || mode === 'webcam_only'
+    const pubAudio = mode === 'both' || mode === 'mic_only'
+
+    if (producers.video) {
+      const vt = pubVideo ? liveTrack(stream, 'video') : undefined
+      if (vt) {
+        await producers.video.replaceTrack({ track: vt })
+      } else {
+        producers.video.pause()
+      }
+    } else if (pubVideo && sendTransport) {
+      const vt = liveTrack(stream, 'video')
+      if (vt) {
+        producersRef.current.video = await sendTransport.produce({ track: vt })
+      }
+    }
+
+    if (producers.audio) {
+      const at = pubAudio ? liveTrack(stream, 'audio') : undefined
+      if (at) {
+        await producers.audio.replaceTrack({ track: at })
+      } else {
+        producers.audio.pause()
+      }
+    } else if (pubAudio && sendTransport) {
+      const at = liveTrack(stream, 'audio')
+      if (at) {
+        producersRef.current.audio = await sendTransport.produce({ track: at })
+      }
+    }
+  }, [])
 
   const upsertRemote = useCallback((producerPeerId: string, track: MediaStreamTrack) => {
     setRemoteStreams((prev) => mergeRemoteTrack(prev, producerPeerId, track))
@@ -120,10 +159,11 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    const stream = store.getState().videoConference.localStream
     const wantsVideoPub = lastMediaMode === 'both' || lastMediaMode === 'webcam_only'
     const wantsAudioPub = lastMediaMode === 'both' || lastMediaMode === 'mic_only'
-    const canPublishVideo = !wantsVideoPub || Boolean(liveTrack(localStream, 'video'))
-    const canPublishAudio = !wantsAudioPub || Boolean(liveTrack(localStream, 'audio'))
+    const canPublishVideo = !wantsVideoPub || Boolean(liveTrack(stream, 'video'))
+    const canPublishAudio = !wantsAudioPub || Boolean(liveTrack(stream, 'audio'))
 
     if (wantsVideoPub || wantsAudioPub) {
       if (!canPublishVideo || !canPublishAudio) {
@@ -174,6 +214,8 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       }
       sendTransport = null
       recvTransport = null
+      sendTransportRef.current = null
+      producersRef.current = {}
       sig?.dispose()
       sig = null
       try {
@@ -277,6 +319,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
           iceCandidates: sendParams.iceCandidates as IceCandidate[],
           dtlsParameters: sendParams.dtlsParameters as DtlsParameters,
         })
+        sendTransportRef.current = sendTransport
 
         sendTransport.on(
           'connect',
@@ -368,6 +411,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
             producers.audio = p
           }
         }
+        producersRef.current = producers
 
         const list = (await signaling.request('listProducers')) as {
           producers: { peerId: string; producerId: string; kind: string }[]
@@ -405,24 +449,16 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
       setSfuStatus('idle')
       setSfuError(null)
     }
-  }, [
-    presenceJoined,
-    meetingLive,
-    roomId,
-    userId,
-    displayName,
-    localStream,
-    lastMediaMode,
-    upsertRemote,
-  ])
+  }, [presenceJoined, meetingLive, roomId, userId, displayName, lastMediaMode, upsertRemote])
 
   const value = useMemo<MediasoupMediaContextValue>(
     () => ({
       remoteStreams,
       sfuStatus,
       sfuError,
+      syncLocalMedia,
     }),
-    [remoteStreams, sfuStatus, sfuError],
+    [remoteStreams, sfuStatus, sfuError, syncLocalMedia],
   )
 
   return <MediasoupMediaContext.Provider value={value}>{children}</MediasoupMediaContext.Provider>

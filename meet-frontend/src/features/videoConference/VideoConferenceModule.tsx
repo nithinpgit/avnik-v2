@@ -5,6 +5,7 @@ import { MeetingStatusBanner } from '../meeting/MeetingStatusBanner'
 import { selectIsMeetingLive, selectMeetingStatus } from '../meeting/meetingLifecycleSlice'
 import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
 import { useMeetingElapsedLabel } from '../meeting/useMeetingElapsedLabel'
+import { openPreMeetingSettings } from '../preMeeting/preMeetingSlice'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
 import { LocalCameraManager } from './LocalCameraManager'
 import { ParticipantVideoTile } from './ParticipantVideoTile'
@@ -83,6 +84,7 @@ export function VideoConferenceModule() {
             className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
             data-tooltip="Settings"
             aria-label="Settings"
+            onClick={() => dispatch(openPreMeetingSettings())}
           >
             <span className="cmn-cricle-btn__icon" aria-hidden>
               <IconGear />
