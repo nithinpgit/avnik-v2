@@ -103,12 +103,21 @@ export function IconGridLayout(props: IconProps) {
   return MrIcon('mr-grid-view-icon', props)
 }
 
+export function IconScreenShare(props: IconProps) {
+  return MrIcon('mr-screen-share-icon', props)
+}
+
 export function IconDocument(props: IconProps) {
   return MrIcon('mr-document-share-icon', props)
 }
 
-export function IconVideoCam(props: IconProps) {
+/** Share video file / YouTube (not local webcam). */
+export function IconVideoShare(props: IconProps) {
   return MrIcon('mr-video-share-icon', props)
+}
+
+export function IconWebcam(props: IconProps) {
+  return MrIcon('mr-webcam-on-icon', props)
 }
 
 export function IconFullscreen(props: IconProps) {
@@ -117,6 +126,30 @@ export function IconFullscreen(props: IconProps) {
 
 export function IconMic(props: IconProps) {
   return MrIcon('mr-mic-on-icon', props)
+}
+
+export function IconAllWebcamOff(props: IconProps) {
+  return MrIcon('mr-all-webcam-off-icon', props)
+}
+
+export function IconAllMicOff(props: IconProps) {
+  return MrIcon('mr-all-mic-off-icon', props)
+}
+
+export function IconZoomOut(props: IconProps) {
+  return MrIcon('mr-zoom-out-icon', props)
+}
+
+export function IconZoomIn(props: IconProps) {
+  return MrIcon('mr-zoom-in-icon', props)
+}
+
+export function IconPagePrev(props: IconProps) {
+  return MrIcon('mr-left-page-icon', props)
+}
+
+export function IconPageNext(props: IconProps) {
+  return MrIcon('mr-right-page-icon', props)
 }
 
 /** Thin stroke to match avnik dock glyphs (filled hand.svg read as much bolder). */

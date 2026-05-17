@@ -2,7 +2,12 @@ import { useCallback } from 'react'
 import { useAppSelector } from '../../app/hooks'
 import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
 import { selectActivePresentation } from './documentsSlice'
-import { IconPageNext, IconPagePrev, IconZoomIn, IconZoomOut } from './DocumentIcons'
+import {
+  IconPageNext,
+  IconPagePrev,
+  IconZoomIn,
+  IconZoomOut,
+} from '../videoConference/MeetingIcons'
 import { usePresentationSync } from './usePresentationSync'
 import './documentToolbar.css'
 
@@ -30,8 +35,8 @@ export function DocumentToolbar() {
   const zoom = presentation.zoomPercent
 
   return (
-    <div className="document-toolbar" aria-label="Document controls">
-      <div className="document-toolbar__group zoom-in-out-bx">
+    <li className="document-toolbar dock-toolbar-section--document" aria-label="Document controls">
+      <div className="document-toolbar__group zoom-in-out-bx zoom-blk">
         <button
           type="button"
           className="document-toolbar__btn meeting-tooltip meeting-tooltip--top"
@@ -56,7 +61,7 @@ export function DocumentToolbar() {
       </div>
 
       {total > 1 ? (
-        <div className="document-toolbar__group page-pre-next-bx">
+        <div className="document-toolbar__group page-pre-next-bx zoom-blk">
           <button
             type="button"
             className="document-toolbar__btn meeting-tooltip meeting-tooltip--top"
@@ -99,6 +104,6 @@ export function DocumentToolbar() {
           </button>
         </div>
       ) : null}
-    </div>
+    </li>
   )
 }

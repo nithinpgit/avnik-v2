@@ -1,4 +1,4 @@
-import type { CSSProperties, FC } from 'react'
+import type { CSSProperties } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { MeetingStatusBanner } from '../meeting/MeetingStatusBanner'
@@ -6,9 +6,8 @@ import { selectIsMeetingLive, selectMeetingStatus } from '../meeting/meetingLife
 import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
 import { useMeetingElapsedLabel } from '../meeting/useMeetingElapsedLabel'
 import { openPreMeetingSettings } from '../preMeeting/preMeetingSlice'
-import { DocumentToolbar } from '../documents/DocumentToolbar'
-import { openShareDocumentModal } from '../documents/documentsSlice'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
+import { MeetingBottomToolbar } from './MeetingBottomToolbar'
 import { LocalCameraManager } from './LocalCameraManager'
 import { ParticipantVideoTile } from './ParticipantVideoTile'
 import {
@@ -18,35 +17,20 @@ import {
 } from './videoConferenceSlice'
 import {
   IconBell,
-  IconDocument,
   IconExit,
-  IconFullscreen,
   IconGear,
-  IconGridLayout,
-  IconHand,
-  IconMic,
   IconMonitor,
   IconPause,
   IconPlay,
   IconRecord,
   IconSearch,
   IconUser,
-  IconVideoCam,
 } from './MeetingIcons'
 import { getConferenceGridLayout } from './conferenceGrid'
 import './meeting-icons.css'
+import './meetingBottomToolbar.css'
 import './meetingTooltip.css'
 import './videoConference.css'
-
-const dockItems: { key: string; icon: FC; label: string }[] = [
-  { key: 'layout', icon: IconGridLayout, label: 'Layout' },
-  { key: 'files', icon: IconDocument, label: 'Files' },
-  { key: 'video', icon: IconVideoCam, label: 'Video' },
-  { key: 'fullscreen', icon: IconFullscreen, label: 'Fullscreen' },
-  { key: 'cam', icon: IconVideoCam, label: 'Camera' },
-  { key: 'mic', icon: IconMic, label: 'Microphone' },
-  { key: 'hand', icon: IconHand, label: 'Raise hand' },
-]
 
 export function VideoConferenceModule() {
   const dispatch = useAppDispatch()
@@ -250,23 +234,7 @@ export function VideoConferenceModule() {
         </>
       ) : null}
 
-      <footer className="meeting-bottom-dock" aria-label="Meeting controls">
-        <div className="meeting-bottom-dock__inner">
-          <DocumentToolbar />
-          {dockItems.map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              type="button"
-              className="dock-btn meeting-tooltip meeting-tooltip--top"
-              data-tooltip={label}
-              aria-label={label}
-              onClick={key === 'files' ? () => dispatch(openShareDocumentModal()) : undefined}
-            >
-              <Icon />
-            </button>
-          ))}
-        </div>
-      </footer>
+      <MeetingBottomToolbar />
 
     </section>
   )
