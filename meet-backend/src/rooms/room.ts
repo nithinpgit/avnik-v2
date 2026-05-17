@@ -1,8 +1,10 @@
+import type { MeetingLifecycleState } from '../meeting/meeting-lifecycle.types'
 import { Peer, type MeetingRole, type PeerProps, type PeerPublicView } from './peer'
 
 export type RoomSnapshot = {
   roomId: string
   peers: PeerPublicView[]
+  meeting: MeetingLifecycleState
 }
 
 /**
@@ -71,10 +73,11 @@ export class Room {
     return peer
   }
 
-  snapshot(): RoomSnapshot {
+  snapshot(meeting: MeetingLifecycleState): RoomSnapshot {
     return {
       roomId: this.id,
       peers: [...this.peersByUserId.values()].map((p) => p.toPublic()),
+      meeting,
     }
   }
 }

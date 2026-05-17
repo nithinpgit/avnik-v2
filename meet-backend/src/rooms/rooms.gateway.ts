@@ -14,6 +14,8 @@ import type { Server, Socket } from 'socket.io'
 import { ChatService } from '../chat/chat.service'
 import { ChatMarkReadDto } from '../chat/dto/chat-mark-read.dto'
 import { ChatSendDto } from '../chat/dto/chat-send.dto'
+import { MEETING_LIFECYCLE_CHANNEL } from '../meeting/meeting-lifecycle.types'
+import { MeetingLifecycleService } from '../meeting/meeting-lifecycle.service'
 import { RoomSyncDto } from '../sync/dto/room-sync.dto'
 import { MAX_ROOM_SYNC_CHANNEL_BYTES, RoomSyncService } from '../sync/room-sync.service'
 import { JoinRoomDto } from './dto/join-room.dto'
@@ -40,6 +42,7 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
   constructor(
     private readonly roomsService: RoomsService,
     private readonly roomSyncService: RoomSyncService,
+    private readonly meetingLifecycle: MeetingLifecycleService,
     private readonly chatService: ChatService,
   ) {}
 
@@ -66,7 +69,7 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
     this.roomsService.pruneEmpty(roomId)
     if (left) {
       client.to(roomId).emit('peer_left', { userId: left.userId })
-      client.to(roomId).emit('room_snapshot', room.snapshot())
+      void this.emitRoomSnapshot(roomId)
     }
   }
 
@@ -104,8 +107,8 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
     ;(client.data as SocketData).roomId = dto.roomId
     ;(client.data as SocketData).userId = dto.userId
 
-    const snapshot = room.snapshot()
-    client.emit('room_snapshot', snapshot)
+    const meeting = await this.meetingLifecycle.ensure(dto.roomId)
+    client.emit('room_snapshot', room.snapshot(meeting))
 
     try {
       const states = await this.roomSyncService.getAllParsed(dto.roomId)
@@ -154,6 +157,13 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
       return
     }
 
+    if (dto.channel === MEETING_LIFECYCLE_CHANNEL) {
+      client.emit('room_sync_error', {
+        message: 'meeting_lifecycle is server-controlled; use start_meeting',
+      })
+      return
+    }
+
     try {
       await this.roomSyncService.setChannel(dto.roomId, dto.channel, dto.payload)
     } catch (e) {
@@ -166,6 +176,38 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
       channel: dto.channel,
       payload: dto.payload,
     })
+  }
+
+  @SubscribeMessage('start_meeting')
+  async startMeeting(@ConnectedSocket() client: Socket, @MessageBody() body: unknown): Promise<void> {
+    const data = client.data as SocketData
+    const roomId = typeof body === 'object' && body !== null && 'roomId' in body
+      ? String((body as { roomId: unknown }).roomId)
+      : data.roomId
+    if (!roomId || data.roomId !== roomId || !data.userId) {
+      client.emit('meeting_error', { message: 'Must join_room before start_meeting' })
+      return
+    }
+
+    const room = this.roomsService.getRoom(roomId)
+    if (!room) {
+      client.emit('meeting_error', { message: 'Room not found' })
+      return
+    }
+
+    if (room.hostUserId !== data.userId) {
+      client.emit('meeting_error', { message: 'Only the host can start the meeting' })
+      return
+    }
+
+    try {
+      const meeting = await this.meetingLifecycle.startMeeting(roomId, data.userId)
+      this.broadcastMeetingLifecycle(roomId, meeting)
+      this.logger.debug(`Meeting started in ${roomId} by ${data.userId}`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Start failed'
+      client.emit('meeting_error', { message: msg })
+    }
   }
 
   @SubscribeMessage('chat_send')
@@ -300,9 +342,24 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
     this.roomsService.pruneEmpty(roomId)
     if (left) {
       client.to(roomId).emit('peer_left', { userId: left.userId })
-      client.to(roomId).emit('room_snapshot', room.snapshot())
+      void this.emitRoomSnapshot(roomId)
     }
     delete (client.data as SocketData).roomId
     delete (client.data as SocketData).userId
+  }
+
+  private async emitRoomSnapshot(roomId: string): Promise<void> {
+    const room = this.roomsService.getRoom(roomId)
+    if (!room) return
+    const meeting = await this.meetingLifecycle.get(roomId)
+    this.server.to(roomId).emit('room_snapshot', room.snapshot(meeting))
+  }
+
+  private broadcastMeetingLifecycle(roomId: string, meeting: Awaited<ReturnType<MeetingLifecycleService['startMeeting']>>) {
+    this.server.to(roomId).emit('meeting_lifecycle', { meeting })
+    this.server.to(roomId).emit('room_sync', {
+      channel: MEETING_LIFECYCLE_CHANNEL,
+      payload: meeting,
+    })
   }
 }

@@ -1,5 +1,11 @@
 import type { FC } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
+import { MeetingStatusBanner } from '../meeting/MeetingStatusBanner'
+import { selectIsMeetingLive, selectMeetingStatus } from '../meeting/meetingLifecycleSlice'
+import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
+import { useMeetingElapsedLabel } from '../meeting/useMeetingElapsedLabel'
+import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
 import { LocalCameraManager } from './LocalCameraManager'
 import { ParticipantVideoTile } from './ParticipantVideoTile'
 import {
@@ -9,7 +15,6 @@ import {
 } from './videoConferenceSlice'
 import {
   IconBell,
-  IconCrown,
   IconDocument,
   IconExit,
   IconFullscreen,
@@ -19,6 +24,7 @@ import {
   IconMic,
   IconMonitor,
   IconPause,
+  IconPlay,
   IconRecord,
   IconSearch,
   IconUser,
@@ -40,8 +46,29 @@ const dockItems: { key: string; icon: FC; label: string }[] = [
 
 export function VideoConferenceModule() {
   const dispatch = useAppDispatch()
+  const { startMeeting } = useMeetingSocket()
   const isConferenceMode = useAppSelector(selectConferenceMode)
   const participants = useAppSelector(selectParticipants)
+  const meetingStatus = useAppSelector(selectMeetingStatus)
+  const meetingLive = useAppSelector(selectIsMeetingLive)
+  const isHost = useIsMeetingHost()
+  const elapsedLabel = useMeetingElapsedLabel()
+  const [startingMeeting, setStartingMeeting] = useState(false)
+
+  const showHostPlay = isHost && meetingStatus === 'not_started'
+
+  useEffect(() => {
+    if (!startingMeeting) return
+    const id = window.setTimeout(() => setStartingMeeting(false), 8000)
+    return () => window.clearTimeout(id)
+  }, [startingMeeting])
+
+  const handleStartMeeting = () => {
+    if (startingMeeting || meetingLive) return
+    setStartingMeeting(true)
+    startMeeting()
+  }
+
   return (
     <section
       className={`video-conference ${isConferenceMode ? 'conference' : 'normal'}`}
@@ -61,37 +88,47 @@ export function VideoConferenceModule() {
               <IconGear />
             </span>
           </button>
-          <button
-            type="button"
-            className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
-            data-tooltip="Host"
-            aria-label="Host"
-          >
-            <span className="cmn-cricle-btn__icon" aria-hidden>
-              <IconCrown />
-            </span>
-          </button>
-          <span className="meeting-time">22:26:17</span>
-          <button
-            type="button"
-            className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
-            data-tooltip="Pause"
-            aria-label="Pause"
-          >
-            <span className="cmn-cricle-btn__icon" aria-hidden>
-              <IconPause />
-            </span>
-          </button>
-          <button
-            type="button"
-            className="cmn-cricle-btn cmn-cricle-btn--record-dot meeting-tooltip meeting-tooltip--bottom"
-            data-tooltip="Recording"
-            aria-label="Recording"
-          >
-            <span className="cmn-cricle-btn__icon cmn-cricle-btn__icon--record" aria-hidden>
-              <IconRecord size={14} />
-            </span>
-          </button>
+          <span className="meeting-time" aria-live="polite">
+            {elapsedLabel}
+          </span>
+          {showHostPlay ? (
+            <button
+              type="button"
+              className="cmn-cricle-btn cmn-cricle-btn--active meeting-tooltip meeting-tooltip--bottom"
+              data-tooltip="Click play button to start meeting"
+              aria-label="Start meeting"
+              disabled={startingMeeting && !meetingLive}
+              onClick={handleStartMeeting}
+            >
+              <span className="cmn-cricle-btn__icon" aria-hidden>
+                <IconPlay />
+              </span>
+            </button>
+          ) : null}
+          {meetingLive && isHost ? (
+            <>
+              <button
+                type="button"
+                className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
+                data-tooltip="Pause"
+                aria-label="Pause"
+              >
+                <span className="cmn-cricle-btn__icon" aria-hidden>
+                  <IconPause />
+                </span>
+              </button>
+              <button
+                type="button"
+                className="cmn-cricle-btn cmn-cricle-btn--record-dot meeting-tooltip meeting-tooltip--bottom"
+                data-tooltip="Recording"
+                aria-label="Recording"
+              >
+                <span className="cmn-cricle-btn__icon cmn-cricle-btn__icon--record" aria-hidden>
+                  <IconRecord size={14} />
+                </span>
+              </button>
+            </>
+          ) : null}
           <button
             type="button"
             className="cmn-cricle-btn cmn-cricle-btn--exit meeting-tooltip meeting-tooltip--bottom"
@@ -145,6 +182,7 @@ export function VideoConferenceModule() {
 
       {!isConferenceMode && (
         <aside id="video-sidebar" className="video-sidebar" aria-label="Participants panel">
+          <MeetingStatusBanner />
           <header className="video-sidebar__header">
             <span>Participants ({participants.length})</span>
             <button

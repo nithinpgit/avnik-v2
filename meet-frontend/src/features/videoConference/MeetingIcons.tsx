@@ -56,6 +56,10 @@ export function IconPause(props: IconProps) {
   return MrIcon('mr-pause-timer-icon', props)
 }
 
+export function IconPlay(props: IconProps) {
+  return MrIcon('mr-start-timer-icon', props)
+}
+
 /** Legacy join UI used a red dot for recording — no dedicated avnik glyph in use here. */
 export function IconRecord({ size = 12, className, style }: IconProps) {
   const s = size

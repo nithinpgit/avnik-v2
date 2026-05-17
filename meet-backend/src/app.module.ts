@@ -4,10 +4,11 @@ import { ChatModule } from './chat/chat.module'
 import { DatabaseModule } from './database/database.module'
 import { HealthModule } from './health/health.module'
 import { MediaModule } from './media/media.module'
+import { MeetingModule } from './meeting/meeting.module'
 import { RoomsModule } from './rooms/rooms.module'
 
 @Module({
-  imports: [DatabaseModule, HealthModule, MediaModule, ChatModule, RoomsModule],
+  imports: [DatabaseModule, HealthModule, MediaModule, MeetingModule, ChatModule, RoomsModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

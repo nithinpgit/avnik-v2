@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
+import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
 import {
   selectPreMeetingEntryCompleted,
   selectPreMeetingLastMediaMode,
@@ -21,10 +22,11 @@ export function LocalCameraManager() {
   const dispatch = useAppDispatch()
   const preMeetingOpen = useAppSelector(selectPreMeetingOpen)
   const entryCompleted = useAppSelector(selectPreMeetingEntryCompleted)
+  const meetingLive = useAppSelector(selectIsMeetingLive)
   const lastMediaMode = useAppSelector(selectPreMeetingLastMediaMode)
 
   useEffect(() => {
-    if (preMeetingOpen || !entryCompleted) {
+    if (preMeetingOpen || !entryCompleted || !meetingLive) {
       return
     }
     if (store.getState().videoConference.localStream) {
@@ -88,7 +90,7 @@ export function LocalCameraManager() {
       dispatch(setCameraStatus('idle'))
       dispatch(setCameraErrorMessage(null))
     }
-  }, [preMeetingOpen, entryCompleted, lastMediaMode, dispatch])
+  }, [preMeetingOpen, entryCompleted, meetingLive, lastMediaMode, dispatch])
 
   return null
 }

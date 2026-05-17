@@ -26,6 +26,7 @@ import {
   selectMeetingRoomId,
   selectMeetingUserId,
 } from '../meetingSession/meetingSessionSlice'
+import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
 import { selectPreMeetingLastMediaMode } from '../preMeeting/preMeetingSlice'
 import { selectLocalStream, selectParticipants } from '../videoConference/videoConferenceSlice'
 import { MediaSignaling } from './MediaSignaling'
@@ -78,6 +79,7 @@ function mergeRemoteTrack(
 
 export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   const { presenceJoined } = useMeetingSocket()
+  const meetingLive = useAppSelector(selectIsMeetingLive)
   const roomId = useAppSelector(selectMeetingRoomId)
   const userId = useAppSelector(selectMeetingUserId)
   const displayName = useAppSelector(selectMeetingDisplayName)
@@ -114,7 +116,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   }, [participants])
 
   useEffect(() => {
-    if (!presenceJoined || !roomId || !userId) {
+    if (!presenceJoined || !meetingLive || !roomId || !userId) {
       return
     }
 
@@ -405,6 +407,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     }
   }, [
     presenceJoined,
+    meetingLive,
     roomId,
     userId,
     displayName,
