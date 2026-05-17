@@ -1,15 +1,25 @@
 import type { MutableRefObject } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { mediaConstraintsFor } from './mediaDeviceUtils'
 import type { PreMeetingMediaMode } from './preMeetingSlice'
 
 export type PreMeetingSettingsReport = {
   stream: MediaStream | null
   mediaMode: PreMeetingMediaMode
+  videoDeviceId: string
+  audioInDeviceId: string
+  audioOutDeviceId: string
 }
 
 type PreMeetingSettingsTabProps = {
   onStateChange: (state: PreMeetingSettingsReport) => void
   skipStopTracksOnUnmountRef: MutableRefObject<boolean>
+  initialMediaMode?: PreMeetingMediaMode | null
+  initialVideoDeviceId?: string | null
+  initialAudioInDeviceId?: string | null
+  initialAudioOutDeviceId?: string | null
+  /** Hide Webcam/Mic mode radios when reopening settings during an active meeting. */
+  hideMediaModeRadios?: boolean
 }
 
 type DeviceLists = {
@@ -18,30 +28,14 @@ type DeviceLists = {
   audioOutputs: MediaDeviceInfo[]
 }
 
-function constraintsFor(
+function reportFrom(
+  stream: MediaStream | null,
   mode: PreMeetingMediaMode,
   videoDeviceId: string,
-  audioInId: string,
-): MediaStreamConstraints | null {
-  if (mode === 'none') {
-    return null
-  }
-  const wantVideo = mode === 'webcam_only' || mode === 'both'
-  const wantAudio = mode === 'mic_only' || mode === 'both'
-  if (!wantVideo && !wantAudio) {
-    return null
-  }
-  const video = wantVideo
-    ? videoDeviceId
-      ? { deviceId: { exact: videoDeviceId } }
-      : true
-    : false
-  const audio = wantAudio
-    ? audioInId
-      ? { deviceId: { exact: audioInId } }
-      : true
-    : false
-  return { video, audio }
+  audioInDeviceId: string,
+  audioOutDeviceId: string,
+): PreMeetingSettingsReport {
+  return { stream, mediaMode: mode, videoDeviceId, audioInDeviceId, audioOutDeviceId }
 }
 
 async function refreshDevices(): Promise<DeviceLists> {
@@ -56,22 +50,27 @@ async function refreshDevices(): Promise<DeviceLists> {
 export function PreMeetingSettingsTab({
   onStateChange,
   skipStopTracksOnUnmountRef,
+  initialMediaMode = null,
+  initialVideoDeviceId = null,
+  initialAudioInDeviceId = null,
+  initialAudioOutDeviceId = null,
+  hideMediaModeRadios = false,
 }: PreMeetingSettingsTabProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   /** Set true when the preview effect cleans up or deps change; in-flight getUserMedia must bail before setState. */
   const streamApplyCancelledRef = useRef(false)
 
-  const [mediaMode, setMediaMode] = useState<PreMeetingMediaMode>('both')
+  const [mediaMode, setMediaMode] = useState<PreMeetingMediaMode>(initialMediaMode ?? 'both')
   const [devices, setDevices] = useState<DeviceLists>({
     videoInputs: [],
     audioInputs: [],
     audioOutputs: [],
   })
   /** Empty string means “use first available device” (derived in render). */
-  const [videoId, setVideoId] = useState('')
-  const [audioInId, setAudioInId] = useState('')
-  const [audioOutId, setAudioOutId] = useState('')
+  const [videoId, setVideoId] = useState(initialVideoDeviceId ?? '')
+  const [audioInId, setAudioInId] = useState(initialAudioInDeviceId ?? '')
+  const [audioOutId, setAudioOutId] = useState(initialAudioOutDeviceId ?? '')
   const [error, setError] = useState<string | null>(null)
 
   const firstVideoId = devices.videoInputs[0]?.deviceId ?? ''
@@ -92,9 +91,9 @@ export function PreMeetingSettingsTab({
     async (mode: PreMeetingMediaMode, vId: string, aId: string) => {
       stopStream()
       setError(null)
-      const cons = constraintsFor(mode, vId, aId)
+      const cons = mediaConstraintsFor(mode, vId, aId)
       if (!cons) {
-        onStateChange({ stream: null, mediaMode: mode })
+        onStateChange(reportFrom(null, mode, vId, aId, audioOutId || firstAudioOutId))
         return
       }
       try {
@@ -109,7 +108,7 @@ export function PreMeetingSettingsTab({
           videoRef.current.muted = true
           void videoRef.current.play().catch(() => {})
         }
-        onStateChange({ stream, mediaMode: mode })
+        onStateChange(reportFrom(stream, mode, vId, aId, audioOutId || firstAudioOutId))
         const next = await refreshDevices()
         if (streamApplyCancelledRef.current) {
           return
@@ -121,11 +120,31 @@ export function PreMeetingSettingsTab({
         }
         const msg = e instanceof Error ? e.message : 'Could not access media devices'
         setError(msg)
-        onStateChange({ stream: null, mediaMode: mode })
+        onStateChange(reportFrom(null, mode, vId, aId, audioOutId || firstAudioOutId))
       }
     },
-    [onStateChange, stopStream],
+    [onStateChange, stopStream, audioOutId, firstAudioOutId],
   )
+
+  useEffect(() => {
+    if (initialMediaMode) {
+      setMediaMode(initialMediaMode)
+    }
+    if (initialVideoDeviceId) {
+      setVideoId(initialVideoDeviceId)
+    }
+    if (initialAudioInDeviceId) {
+      setAudioInId(initialAudioInDeviceId)
+    }
+    if (initialAudioOutDeviceId) {
+      setAudioOutId(initialAudioOutDeviceId)
+    }
+  }, [
+    initialMediaMode,
+    initialVideoDeviceId,
+    initialAudioInDeviceId,
+    initialAudioOutDeviceId,
+  ])
 
   useEffect(() => {
     streamApplyCancelledRef.current = false
@@ -296,26 +315,42 @@ export function PreMeetingSettingsTab({
         </div>
       </div>
 
-      <div className="webcam-radio-btns icon_settings_page">
-        <ul className="cmn-ul-list">
-          {radios.map(({ mode, label }) => (
-            <li key={mode}>
-              <div className="radio custom">
-                <label>
-                  <input
-                    type="radio"
-                    name="pre-meeting-media-mode"
-                    className="radio_button"
-                    checked={mediaMode === mode}
-                    onChange={() => setMediaMode(mode)}
-                  />{' '}
-                  {label}
-                </label>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {!hideMediaModeRadios ? (
+        <MediaModeRadios radios={radios} mediaMode={mediaMode} onModeChange={setMediaMode} />
+      ) : null}
+    </div>
+  )
+}
+
+function MediaModeRadios({
+  radios,
+  mediaMode,
+  onModeChange,
+}: {
+  radios: { mode: PreMeetingMediaMode; label: string }[]
+  mediaMode: PreMeetingMediaMode
+  onModeChange: (mode: PreMeetingMediaMode) => void
+}) {
+  return (
+    <div className="webcam-radio-btns icon_settings_page">
+      <ul className="cmn-ul-list">
+        {radios.map(({ mode, label }) => (
+          <li key={mode}>
+            <div className="radio custom">
+              <label>
+                <input
+                  type="radio"
+                  name="pre-meeting-media-mode"
+                  className="radio_button"
+                  checked={mediaMode === mode}
+                  onChange={() => onModeChange(mode)}
+                />{' '}
+                {label}
+              </label>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

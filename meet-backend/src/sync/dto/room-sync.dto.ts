@@ -9,7 +9,7 @@ export class RoomSyncDto {
   /** Lowercase identifier: whiteboard, chat_state, etc. */
   @IsString()
   @MinLength(1)
-  @MaxLength(64)
+  @MaxLength(128)
   @Matches(/^[a-z][a-z0-9_]*$/, {
     message: 'channel must be snake_case starting with a letter',
   })

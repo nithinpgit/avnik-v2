@@ -1,0 +1,80 @@
+.document-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  list-style: none;
+}
+
+.document-toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.document-toolbar__group + .document-toolbar__group {
+  margin-left: 4px;
+  padding-left: 10px;
+  border-left: 1px solid #e6e6e6;
+}
+
+.document-toolbar__btn {
+  border: none;
+  background: transparent;
+  color: #3a3a3a;
+  cursor: pointer;
+  width: 36px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.document-toolbar__btn:hover:not(:disabled) {
+  color: #145388;
+  background: #eef5fb;
+}
+
+.document-toolbar__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.document-toolbar__value {
+  min-width: 44px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #333;
+  padding: 0 4px;
+}
+
+.document-toolbar__page-input {
+  width: 36px;
+  height: 32px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  padding: 0;
+}
+
+.document-toolbar__page-input:focus {
+  outline: 2px solid #145388;
+  outline-offset: 1px;
+}
+
+@keyframes doc-toolbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

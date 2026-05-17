@@ -1,4 +1,46 @@
 .whiteboard-module {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
+  --meeting-topbar-height: 52px;
+  --meeting-sidebar-width: 260px;
+  --meeting-dock-offset: 15px;
+  --meeting-dock-height: 56px;
+  --meeting-stage-inset: 16px;
+  --meeting-stage-bottom: calc(
+    var(--meeting-dock-offset) + var(--meeting-dock-height) + var(--meeting-stage-inset)
+  );
+}
+
+.whiteboard-module--conference-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.whiteboard-module__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  transition: opacity 0.12s ease;
+}
+
+.whiteboard-module__canvas--switching {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Let shared PDF/image show through while Excalidraw stays on top for annotations */
+.whiteboard-module--over-document .whiteboard-module__canvas,
+.whiteboard-module--over-document .excalidraw,
+.whiteboard-module--over-document .excalidraw .App-menu_top,
+.whiteboard-module--over-document .excalidraw .layer-ui__wrapper {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.whiteboard-module--over-document .excalidraw .excalidraw__canvas-wrapper,
+.whiteboard-module--over-document .excalidraw canvas.excalidraw__canvas {
+  background: transparent !important;
+  background-color: transparent !important;
 }

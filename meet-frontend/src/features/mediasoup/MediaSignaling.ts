@@ -29,21 +29,20 @@ export class MediaSignaling {
     } catch {
       return
     }
-    const t = msg.t as string
-    if (t === 'newProducer') {
-      this.pushListeners.forEach((l) => l(msg))
+    const req = msg.req as number | undefined
+    if (req != null) {
+      const p = this.pending.get(req)
+      if (!p) return
+      this.pending.delete(req)
+      if (msg.ok === true) {
+        p.resolve(msg.data)
+      } else {
+        p.reject(new Error(String(msg.error ?? 'media signaling error')))
+      }
       return
     }
-    const req = msg.req as number | undefined
-    if (req == null) return
-    const p = this.pending.get(req)
-    if (!p) return
-    this.pending.delete(req)
-    if (msg.ok === true) {
-      p.resolve(msg.data)
-    } else {
-      p.reject(new Error(String(msg.error ?? 'media signaling error')))
-    }
+    // Server-initiated pushes (no req): newProducer, producerClosed, …
+    this.pushListeners.forEach((l) => l(msg))
   }
 
   request(t: string, d?: unknown): Promise<unknown> {

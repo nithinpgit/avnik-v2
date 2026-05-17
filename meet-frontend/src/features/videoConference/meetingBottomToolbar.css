@@ -1,0 +1,71 @@
+/* Bottom toolbar — matches avnik_old .controls-options-new / .btm-center-tool */
+.controls-options-new.meeting-bottom-dock__inner {
+  gap: 0;
+  padding: 4px 6px;
+}
+
+.dock-toolbar-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.dock-toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 8px;
+  border-right: 1px solid #e6e6e6;
+  line-height: 42px;
+}
+
+.dock-toolbar-section:last-child {
+  border-right: none;
+}
+
+.dock-toolbar-section--share.share-doc-video-bx {
+  padding-left: 4px;
+}
+
+.dock-btn--document-active {
+  color: #e67e22;
+}
+
+.dock-btn--document-active:hover {
+  color: #d35400;
+}
+
+.dock-btn--host {
+  color: #145388;
+}
+
+.dock-btn--host:hover {
+  color: #0f71a3;
+}
+
+.dock-btn--active {
+  color: #145388;
+  background: #eef5fb;
+}
+
+.dock-btn--off {
+  opacity: 0.55;
+}
+
+/* Document zoom/page groups live inside the list */
+.dock-toolbar-list .document-toolbar {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 8px;
+  border-right: 1px solid #e6e6e6;
+  animation: doc-toolbar-in 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dock-toolbar-list .document-toolbar .document-toolbar__group + .document-toolbar__group {
+  margin-left: 0;
+  padding-left: 8px;
+}

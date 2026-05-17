@@ -1,22 +1,17 @@
 /* Group chat popup — ported from avnik_old join (custom-style.css), scoped to meeting shell */
 
-.video-conference .wb-chat-popup-root {
-  position: absolute;
-  right: 16px;
-  bottom: 72px;
-  z-index: 40;
+.meeting-chat-chrome .wb-chat-popup-root {
   pointer-events: none;
 }
 
-.video-conference .wb-chat-popup-root--open {
+.meeting-chat-chrome .wb-chat-popup-root--open {
   pointer-events: auto;
 }
 
-.video-conference .wb-chat-popup-root .WB-chat-popup-sec {
+.meeting-chat-chrome .wb-chat-popup-root .WB-chat-popup-sec {
   background: #ffffff;
   border-radius: 15px 30px;
   box-shadow: 1px 1px 100px 2px rgb(0 0 0 / 22%);
-  height: 347px;
   width: 400px;
   max-width: calc(100vw - 32px);
   border: 0;
@@ -24,7 +19,7 @@
   pointer-events: auto;
 }
 
-.video-conference .wb-chat-popup-root .WB-chat-popup {
+.meeting-chat-chrome .wb-chat-popup-root .WB-chat-popup {
   position: relative;
   height: 100%;
   display: flex;
@@ -32,7 +27,7 @@
 }
 
 /* Single top bar: title + actions (matches reference layout) */
-.video-conference .wb-chat-popup-root .wb-chat-popup__header {
+.meeting-chat-chrome .wb-chat-popup-root .wb-chat-popup__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -43,7 +38,7 @@
   flex-shrink: 0;
 }
 
-.video-conference .wb-chat-popup-root .wb-chat-popup__header-title {
+.meeting-chat-chrome .wb-chat-popup-root .wb-chat-popup__header-title {
   color: #ffffff;
   font-size: 18px;
   font-weight: 600;
@@ -55,7 +50,7 @@
   min-width: 0;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -68,7 +63,7 @@
   float: none;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills {
   display: flex;
   align-items: center;
   gap: 0;
@@ -78,17 +73,17 @@
   float: none;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li + li {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li + li {
   margin-left: 10px;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li .wb-chat-popup__pill {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li .wb-chat-popup__pill {
   background: #ffffff;
   border-radius: 30px;
   box-shadow: 0 5px 15px rgb(0 0 0 / 10%);
@@ -102,13 +97,13 @@
   box-sizing: border-box;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li .wb-chat-popup__pill i {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li .wb-chat-popup__pill i {
   font-size: 16px;
   line-height: 1;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li a,
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li button {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li a,
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li button {
   background: #ffffff;
   border: none;
   border-radius: 30px;
@@ -129,22 +124,43 @@
   box-sizing: border-box;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li a:hover,
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li button:hover {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li a:hover,
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li button:hover {
   color: #145388;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li.active a,
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li.active button {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li.active a,
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li.active button {
   color: #145388;
 }
 
-.video-conference .wb-chat-popup-root .WBCP-right .nav.nav-pills li i {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li i {
   font-size: 16px;
   line-height: 1;
+  display: inline-block;
 }
 
-.video-conference .wb-chat-popup-root .group_chat_popup_sec {
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li i::before {
+  display: inline-block;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li button i,
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li .fileUpload i {
+  display: inline-block;
+  font-family: 'avnik', sans-serif !important;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li button.send-message-btn i {
+  color: #ffffff;
+}
+
+.meeting-chat-chrome__launcher i {
+  display: inline-block;
+  font-family: 'avnik', sans-serif !important;
+  color: inherit;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .group_chat_popup_sec {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -153,27 +169,64 @@
   width: 100%;
 }
 
-.video-conference .wb-chat-popup-root .group_chat_popup_sec .chat-rbox {
+.meeting-chat-chrome .wb-chat-popup-root .group_chat_popup_sec .chat-rbox,
+.meeting-chat-chrome .wb-chat-popup-root .WB-pop-person-chat .chat-rbox {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
-  height: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.video-conference .wb-chat-popup-root .group_chat_popup_sec .message_box_scroll {
-  height: 100%;
+.meeting-chat-chrome .wb-chat-popup-root .message_box_scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
   margin: 0;
   padding: 8px 0;
   list-style: none;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
-.video-conference .wb-chat-popup-root .group-chat-pop-footer {
-  padding: 10px 10px 0 10px;
+.meeting-chat-chrome .wb-chat-popup-root .message_box_scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .message_box_scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .message_box_scroll::-webkit-scrollbar-thumb {
+  background: #c5cdd8;
+  border-radius: 4px;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .message_box_scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-scroll-anchor {
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  list-style: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .group-chat-pop-footer {
+  padding: 8px 10px 10px;
   flex-shrink: 0;
+  margin-top: auto;
 }
 
-.video-conference .wb-chat-popup-root .group-messages-footer {
+.meeting-chat-chrome .wb-chat-popup-root .group-messages-footer {
   border-top: 0;
   bottom: 0;
   display: table;
@@ -185,7 +238,7 @@
   box-sizing: border-box;
 }
 
-.video-conference .wb-chat-popup-root .group-messages-footer:after {
+.meeting-chat-chrome .wb-chat-popup-root .group-messages-footer:after {
   position: absolute;
   content: '';
   background-color: #145388;
@@ -197,14 +250,16 @@
   z-index: 0;
 }
 
-.video-conference .wb-chat-popup-root .popup-messages-footer {
+.meeting-chat-chrome .wb-chat-popup-root .popup-messages-footer {
   display: table-cell;
   vertical-align: middle;
   width: 78%;
 }
 
-.video-conference .wb-chat-popup-root .popup-messages-footer textarea.chat-pop-input {
+.meeting-chat-chrome .wb-chat-popup-root .popup-messages-footer textarea.chat-pop-input {
   border: 0;
+  outline: none;
+  box-shadow: none;
   font-size: 12px;
   height: 27px;
   min-height: 27px;
@@ -224,11 +279,18 @@
   box-sizing: border-box;
 }
 
-.video-conference .wb-chat-popup-root .popup-messages-footer textarea.chat-pop-input::placeholder {
+.meeting-chat-chrome .wb-chat-popup-root .popup-messages-footer textarea.chat-pop-input:focus,
+.meeting-chat-chrome .wb-chat-popup-root .popup-messages-footer textarea.chat-pop-input:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .popup-messages-footer textarea.chat-pop-input::placeholder {
   color: #9ca3af;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance {
   display: table-cell;
   vertical-align: middle;
   width: 22%;
@@ -236,7 +298,7 @@
   top: 2px;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance ul {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance ul {
   display: flex;
   margin: 0;
   padding: 0;
@@ -245,33 +307,33 @@
   list-style: none;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li {
   list-style: none;
   float: none;
   padding-left: 0;
   padding-right: 8px;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li:last-child {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li:last-child {
   padding-right: 0;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li button,
-.video-conference .wb-chat-popup-root .group-message-advance li .fileUpload i {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li button,
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li .fileUpload i {
   font-size: 20px;
   color: #000000;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li .fileUpload i {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li .fileUpload i {
   font-size: 24px;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li button:hover,
-.video-conference .wb-chat-popup-root .group-message-advance li .fileUpload:hover i {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li button:hover,
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li .fileUpload:hover i {
   color: #145388;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li button {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li button {
   background: transparent;
   border: none;
   padding: 0;
@@ -285,22 +347,22 @@
   top: -4px;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li button.send-message-btn {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li button.send-message-btn {
   color: #ffffff;
   font-size: 15px;
   right: -6px;
   top: -3px;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li button.send-message-btn .mr-send-icon {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li button.send-message-btn .mr-send-icon {
   color: #ffffff;
 }
 
-.video-conference .wb-chat-popup-root .group-message-advance li .fileUpload:hover i {
+.meeting-chat-chrome .wb-chat-popup-root .group-message-advance li .fileUpload:hover i {
   color: #ffffff;
 }
 
-.video-conference .wb-chat-popup-root .fileUpload {
+.meeting-chat-chrome .wb-chat-popup-root .fileUpload {
   margin: 0;
   overflow: hidden;
   position: relative;
@@ -312,7 +374,7 @@
   height: 32px;
 }
 
-.video-conference .wb-chat-popup-root .fileUpload input[type='file'] {
+.meeting-chat-chrome .wb-chat-popup-root .fileUpload input[type='file'] {
   position: absolute;
   inset: 0;
   opacity: 0;
@@ -322,31 +384,208 @@
   height: 100%;
 }
 
-.video-conference .wb-chat-popup-root .smiley-btn {
+.meeting-chat-chrome .wb-chat-popup-root .smiley-btn {
   min-width: 8px;
 }
 
-/* Local message rows */
-.video-conference .wb-chat-popup-root .wb-chat-msg {
-  padding: 6px 15px;
+/* Message bubbles (reference avnik_old) */
+.meeting-chat-chrome .wb-chat-popup-root .chat-popup-user {
+  display: flex;
+  margin-bottom: 10px;
+  padding: 0 12px;
+  list-style: none;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-popup-user.me {
+  justify-content: flex-end;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-popup-user.other {
+  justify-content: flex-start;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-img {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #145388;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-img__initials {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-content {
+  max-width: 78%;
+  display: flex;
+  flex-direction: column;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-popup-user.me .chat-content {
+  align-items: flex-end;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .CPM-box span {
+  display: inline-block;
+  padding: 8px 10px;
+  max-width: 100%;
+  word-break: break-word;
   font-size: 13px;
-  color: #333;
   line-height: 1.4;
 }
 
-.video-conference .wb-chat-popup-root .wb-chat-msg--self {
-  text-align: right;
+.meeting-chat-chrome .wb-chat-popup-root .chat-popup-user.other .CPM-box span {
+  background: #f7f7f8;
+  border-radius: 10px 10px 10px 0;
+  color: #333;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-popup-user.me .CPM-box span {
+  background: #edeef7;
+  border-radius: 10px 10px 0 10px;
   color: #145388;
-  font-weight: 500;
 }
 
-@media (max-width: 480px) {
-  .video-conference .wb-chat-popup-root {
-    right: 8px;
-    bottom: 68px;
-  }
-
-  .video-conference .wb-chat-popup-root .WB-chat-popup-sec {
-    width: min(400px, calc(100vw - 16px));
-  }
+.meeting-chat-chrome .wb-chat-popup-root .ih3 {
+  display: block;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 600;
+  color: #145388;
+  margin-bottom: 2px;
 }
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-seen-label {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-mgs-dot,
+.meeting-chat-chrome .wb-chat-popup-root .chat-message-show {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff5722;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WBCP-right .nav.nav-pills li {
+  position: relative;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .wb-chat-popup__back {
+  background: none;
+  border: 0;
+  color: #fff;
+  margin-right: 6px;
+  cursor: pointer;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .person-chat-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WB-pop-list-sec {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WB-search {
+  padding: 0 12px 8px;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WB-search input {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 13px;
+  outline: none;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WB-search input:focus,
+.meeting-chat-chrome .wb-chat-popup-root .WB-search input:focus-visible {
+  border-color: #a8bdd4;
+  outline: none;
+  box-shadow: none;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WB-pop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .wb-chat-user-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .wb-chat-user-row:hover {
+  background: #f1f5f9;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .avatar-circle {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #145388;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-user-cont__name {
+  font-size: 14px;
+  color: #333;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .chat-user-cont__badge {
+  color: #ff5722;
+  font-weight: 600;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WB-pop-person-chat {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WB-pop-person-chat .group-chat-pop-footer {
+  flex-shrink: 0;
+}
+

@@ -1,7 +1,14 @@
-import type { FC } from 'react'
-import { useState } from 'react'
+import type { CSSProperties } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
-import { GroupChatPopup } from './GroupChatPopup'
+import { MeetingStatusBanner } from '../meeting/MeetingStatusBanner'
+import { selectIsMeetingLive, selectMeetingStatus } from '../meeting/meetingLifecycleSlice'
+import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
+import { useMeetingElapsedLabel } from '../meeting/useMeetingElapsedLabel'
+import { openPreMeetingSettings } from '../preMeeting/preMeetingSlice'
+import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
+import { ScreenShareStage } from '../screenShare/ScreenShareStage'
+import { MeetingBottomToolbar } from './MeetingBottomToolbar'
 import { LocalCameraManager } from './LocalCameraManager'
 import { ParticipantVideoTile } from './ParticipantVideoTile'
 import {
@@ -11,41 +18,72 @@ import {
 } from './videoConferenceSlice'
 import {
   IconBell,
-  IconChat,
-  IconCrown,
-  IconDocument,
   IconExit,
-  IconFullscreen,
   IconGear,
-  IconGridLayout,
-  IconHand,
-  IconMic,
   IconMonitor,
   IconPause,
+  IconPlay,
   IconRecord,
   IconSearch,
   IconUser,
-  IconVideoCam,
 } from './MeetingIcons'
+import { getConferenceGridLayout } from './conferenceGrid'
 import './meeting-icons.css'
+import './meetingBottomToolbar.css'
 import './meetingTooltip.css'
 import './videoConference.css'
 
-const dockItems: { key: string; icon: FC; label: string }[] = [
-  { key: 'layout', icon: IconGridLayout, label: 'Layout' },
-  { key: 'files', icon: IconDocument, label: 'Files' },
-  { key: 'video', icon: IconVideoCam, label: 'Video' },
-  { key: 'fullscreen', icon: IconFullscreen, label: 'Fullscreen' },
-  { key: 'cam', icon: IconVideoCam, label: 'Camera' },
-  { key: 'mic', icon: IconMic, label: 'Microphone' },
-  { key: 'hand', icon: IconHand, label: 'Raise hand' },
-]
-
 export function VideoConferenceModule() {
   const dispatch = useAppDispatch()
+  const { startMeeting, pauseMeeting } = useMeetingSocket()
   const isConferenceMode = useAppSelector(selectConferenceMode)
   const participants = useAppSelector(selectParticipants)
-  const [chatOpen, setChatOpen] = useState(false)
+  const meetingStatus = useAppSelector(selectMeetingStatus)
+  const meetingLive = useAppSelector(selectIsMeetingLive)
+  const isHost = useIsMeetingHost()
+  const elapsedLabel = useMeetingElapsedLabel()
+  const [startingMeeting, setStartingMeeting] = useState(false)
+
+  const showHostPlay = isHost && (meetingStatus === 'not_started' || meetingStatus === 'paused')
+  const showHostPause = isHost && meetingStatus === 'started'
+
+  useEffect(() => {
+    if (!startingMeeting) return
+    const id = window.setTimeout(() => setStartingMeeting(false), 8000)
+    return () => window.clearTimeout(id)
+  }, [startingMeeting])
+
+  useEffect(() => {
+    if (meetingLive || meetingStatus === 'paused') {
+      setStartingMeeting(false)
+    }
+  }, [meetingLive, meetingStatus])
+
+  const handleStartOrResume = () => {
+    if (startingMeeting) return
+    if (meetingStatus !== 'not_started' && meetingStatus !== 'paused') return
+    setStartingMeeting(true)
+    startMeeting()
+  }
+
+  const handlePauseMeeting = () => {
+    if (!meetingLive) return
+    pauseMeeting()
+  }
+
+  const conferenceGrid = useMemo(
+    () => getConferenceGridLayout(participants.length),
+    [participants.length],
+  )
+
+  const stageStyle = useMemo(
+    () =>
+      ({
+        '--stage-cols': conferenceGrid.cols,
+        '--stage-rows': conferenceGrid.rows,
+      }) as CSSProperties,
+    [conferenceGrid],
+  )
 
   return (
     <section
@@ -61,42 +99,58 @@ export function VideoConferenceModule() {
             className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
             data-tooltip="Settings"
             aria-label="Settings"
+            onClick={() => dispatch(openPreMeetingSettings())}
           >
             <span className="cmn-cricle-btn__icon" aria-hidden>
               <IconGear />
             </span>
           </button>
-          <button
-            type="button"
-            className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
-            data-tooltip="Host"
-            aria-label="Host"
-          >
-            <span className="cmn-cricle-btn__icon" aria-hidden>
-              <IconCrown />
-            </span>
-          </button>
-          <span className="meeting-time">22:26:17</span>
-          <button
-            type="button"
-            className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
-            data-tooltip="Pause"
-            aria-label="Pause"
-          >
-            <span className="cmn-cricle-btn__icon" aria-hidden>
-              <IconPause />
-            </span>
-          </button>
-          <button
-            type="button"
-            className="cmn-cricle-btn cmn-cricle-btn--record-dot meeting-tooltip meeting-tooltip--bottom"
-            data-tooltip="Recording"
-            aria-label="Recording"
-          >
-            <span className="cmn-cricle-btn__icon cmn-cricle-btn__icon--record" aria-hidden>
-              <IconRecord size={14} />
-            </span>
-          </button>
+          <span className="meeting-time" aria-live="polite">
+            {elapsedLabel}
+          </span>
+          {showHostPlay ? (
+            <button
+              type="button"
+              className="cmn-cricle-btn cmn-cricle-btn--active meeting-tooltip meeting-tooltip--bottom"
+              data-tooltip={
+                meetingStatus === 'paused'
+                  ? 'Click play button to resume meeting'
+                  : 'Click play button to start meeting'
+              }
+              aria-label={meetingStatus === 'paused' ? 'Resume meeting' : 'Start meeting'}
+              disabled={startingMeeting}
+              onClick={handleStartOrResume}
+            >
+              <span className="cmn-cricle-btn__icon" aria-hidden>
+                <IconPlay />
+              </span>
+            </button>
+          ) : null}
+          {showHostPause ? (
+            <>
+              <button
+                type="button"
+                className="cmn-cricle-btn meeting-tooltip meeting-tooltip--bottom"
+                data-tooltip="Pause"
+                aria-label="Pause meeting"
+                onClick={handlePauseMeeting}
+              >
+                <span className="cmn-cricle-btn__icon" aria-hidden>
+                  <IconPause />
+                </span>
+              </button>
+              <button
+                type="button"
+                className="cmn-cricle-btn cmn-cricle-btn--record-dot meeting-tooltip meeting-tooltip--bottom"
+                data-tooltip="Recording"
+                aria-label="Recording"
+              >
+                <span className="cmn-cricle-btn__icon cmn-cricle-btn__icon--record" aria-hidden>
+                  <IconRecord size={14} />
+                </span>
+              </button>
+            </>
+          ) : null}
           <button
             type="button"
             className="cmn-cricle-btn cmn-cricle-btn--exit meeting-tooltip meeting-tooltip--bottom"
@@ -150,6 +204,7 @@ export function VideoConferenceModule() {
 
       {!isConferenceMode && (
         <aside id="video-sidebar" className="video-sidebar" aria-label="Participants panel">
+          <MeetingStatusBanner />
           <header className="video-sidebar__header">
             <span>Participants ({participants.length})</span>
             <button
@@ -169,42 +224,21 @@ export function VideoConferenceModule() {
         </aside>
       )}
 
-      {isConferenceMode && (
-        <div className="video-stage" aria-label="Conference stage">
-          {participants.map((participant, index) => (
-            <ParticipantVideoTile key={participant.id} participant={participant} tileIndex={index} />
-          ))}
-        </div>
-      )}
+      {isConferenceMode ? (
+        <>
+          <div className="conference-backdrop" aria-hidden />
+          <div className="video-stage" style={stageStyle} aria-label="Conference stage">
+            {participants.map((participant, index) => (
+              <ParticipantVideoTile key={participant.id} participant={participant} tileIndex={index} />
+            ))}
+          </div>
+        </>
+      ) : null}
 
-      <footer className="meeting-bottom-dock" aria-label="Meeting controls">
-        <div className="meeting-bottom-dock__inner">
-          {dockItems.map(({ key, icon: Icon, label }) => (
-            <button
-              key={key}
-              type="button"
-              className="dock-btn meeting-tooltip meeting-tooltip--top"
-              data-tooltip={label}
-              aria-label={label}
-            >
-              <Icon />
-            </button>
-          ))}
-        </div>
-      </footer>
+      <ScreenShareStage />
 
-      <button
-        type="button"
-        className={`fab-corner fab-corner--chat meeting-tooltip meeting-tooltip--top ${chatOpen ? 'fab-corner--chat-active' : ''}`}
-        data-tooltip="Chat"
-        aria-label="Chat"
-        aria-expanded={chatOpen}
-        onClick={() => setChatOpen((o) => !o)}
-      >
-        <IconChat />
-      </button>
+      <MeetingBottomToolbar />
 
-      <GroupChatPopup isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </section>
   )
 }

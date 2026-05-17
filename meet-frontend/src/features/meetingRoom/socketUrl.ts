@@ -17,3 +17,10 @@ export function resolveMeetingSocketUrl(): string | undefined {
   }
   return undefined
 }
+
+/** Builds an API path using the same origin rules as Socket.IO (dev → Nest on :3000). */
+export function resolveMeetingApiPath(path: string): string {
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  const base = resolveMeetingSocketUrl()
+  return base ? `${base}${normalized}` : normalized
+}

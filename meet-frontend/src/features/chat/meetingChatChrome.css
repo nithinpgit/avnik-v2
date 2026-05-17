@@ -1,0 +1,98 @@
+/* Viewport-fixed chat launcher + panel (bottom-right) */
+
+.meeting-chat-chrome {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 110;
+}
+
+.meeting-chat-chrome__launcher {
+  position: fixed !important;
+  right: 20px;
+  bottom: 20px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid #d8dee8;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #333333;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  z-index: 112;
+  transition:
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.meeting-chat-chrome__launcher:hover {
+  color: #145388;
+  box-shadow: 0 6px 22px rgba(20, 83, 136, 0.22);
+}
+
+.meeting-chat-chrome__launcher--active {
+  border-color: #145388;
+  color: #145388;
+  box-shadow: 0 4px 18px rgba(20, 83, 136, 0.28);
+}
+
+.meeting-chat-chrome__badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #ff5722;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.meeting-chat-chrome .wb-chat-popup-root {
+  position: fixed;
+  right: 20px;
+  bottom: 76px;
+  z-index: 111;
+  pointer-events: none;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root--open {
+  pointer-events: auto;
+}
+
+.meeting-chat-chrome .wb-chat-popup-root .WB-chat-popup-sec {
+  height: min(560px, calc(100vh - 140px));
+  min-height: 420px;
+}
+
+@media (max-width: 480px) {
+  .meeting-chat-chrome__launcher {
+    right: 12px;
+    bottom: 12px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .meeting-chat-chrome .wb-chat-popup-root {
+    right: 12px;
+    bottom: 64px;
+  }
+
+  .meeting-chat-chrome .wb-chat-popup-root .WB-chat-popup-sec {
+    width: min(400px, calc(100vw - 24px));
+    min-height: 360px;
+    height: min(480px, calc(100vh - 120px));
+  }
+}

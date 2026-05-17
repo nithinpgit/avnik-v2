@@ -2,14 +2,26 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { io, type Socket } from 'socket.io-client'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
+import { fetchMeetingLifecycle } from '../meeting/meetingLifecycleApi'
+import {
+  resetMeetingLifecycle,
+  setMeetingLifecycle,
+} from '../meeting/meetingLifecycleSlice'
+import {
+  MEETING_LIFECYCLE_CHANNEL,
+  parseMeetingLifecycle,
+} from '../meeting/meetingLifecycleTypes'
 import {
   selectMeetingDisplayName,
   selectMeetingProfileImage,
   selectMeetingRole,
   selectMeetingRoomId,
   selectMeetingUserId,
+  setMeetingSession,
+  type MeetingRole,
 } from '../meetingSession/meetingSessionSlice'
 import { selectPreMeetingEntryCompleted } from '../preMeeting/preMeetingSlice'
+import { resetDocuments } from '../documents/documentsSlice'
 import { applyRoomSyncBulk, applyRoomSyncPatch, resetRoomSync } from '../roomSync/roomSyncSlice'
 import {
   applyRoomSnapshot,
@@ -24,6 +36,10 @@ export type MeetingSocketContextValue = {
   presenceJoined: boolean
   /** Emit a persisted room document update (same contract for whiteboard and future channels). */
   emitRoomSync: (channel: string, payload: unknown) => void
+  /** Host-only: persist and broadcast meeting start (also resumes from paused). */
+  startMeeting: () => void
+  /** Host-only: persist and broadcast meeting pause. */
+  pauseMeeting: () => void
 }
 
 const MeetingSocketContext = createContext<MeetingSocketContextValue | null>(null)
@@ -52,12 +68,47 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
   const [presenceJoined, setPresenceJoined] = useState(false)
   const socketRef = useRef<Socket | null>(null)
 
-  const emitRoomSync = useCallback((channel: string, payload: unknown) => {
+  const emitRoomSync = useCallback(
+    (channel: string, payload: unknown) => {
+      const s = socketRef.current
+      const rid = store.getState().meetingSession.roomId
+      if (!s?.connected || !rid) return
+      dispatch(applyRoomSyncPatch({ channel, payload }))
+      s.emit('room_sync', { roomId: rid, channel, payload })
+    },
+    [dispatch],
+  )
+
+  const startMeeting = useCallback(() => {
     const s = socketRef.current
     const rid = store.getState().meetingSession.roomId
     if (!s?.connected || !rid) return
-    s.emit('room_sync', { roomId: rid, channel, payload })
+    s.emit('start_meeting', { roomId: rid })
   }, [])
+
+  const pauseMeeting = useCallback(() => {
+    const s = socketRef.current
+    const rid = store.getState().meetingSession.roomId
+    if (!s?.connected || !rid) return
+    s.emit('pause_meeting', { roomId: rid })
+  }, [])
+
+  useEffect(() => {
+    if (!entryCompleted || !roomId) return
+    let cancelled = false
+    void fetchMeetingLifecycle(roomId)
+      .then((meeting) => {
+        if (!cancelled) {
+          dispatch(setMeetingLifecycle(meeting))
+        }
+      })
+      .catch((e) => {
+        console.warn('meeting lifecycle fetch failed', e)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [entryCompleted, roomId, dispatch])
 
   useEffect(() => {
     if (!entryCompleted || !roomId || !userId) {
@@ -76,9 +127,32 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
     setSocket(client)
     setPresenceJoined(false)
 
-    const onSnapshot = (payload: { roomId: string; peers: PeerDto[] }) => {
+    const onSnapshot = (payload: { roomId: string; peers: PeerDto[]; meeting?: unknown }) => {
       dispatch(applyRoomSnapshot({ peers: payload.peers.map((p) => mapPeer(p)) }))
+      if (payload.meeting !== undefined) {
+        dispatch(setMeetingLifecycle(parseMeetingLifecycle(payload.meeting)))
+      }
       setPresenceJoined(true)
+    }
+
+    const onMeetingLifecycle = (payload: { meeting?: unknown }) => {
+      if (payload.meeting !== undefined) {
+        dispatch(setMeetingLifecycle(parseMeetingLifecycle(payload.meeting)))
+      }
+    }
+
+    const onMeetingError = (payload: { message?: string }) => {
+      console.error('meeting_error', payload)
+    }
+
+    const onRoleUpdated = (payload: { userId: string; role: MeetingRole }) => {
+      if (payload.userId === userId) {
+        dispatch(setMeetingSession({ role: payload.role }))
+      }
+      const self = store.getState().videoConference.participants.find((p) => p.id === payload.userId)
+      if (self) {
+        dispatch(upsertParticipant({ ...self, role: payload.role }))
+      }
     }
 
     const onPeerJoined = (payload: { peer: PeerDto }) => {
@@ -94,11 +168,22 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
     }
 
     const onRoomSyncBulk = (payload: { states: Record<string, unknown> }) => {
-      dispatch(applyRoomSyncBulk({ states: payload.states ?? {} }))
+      const states = payload.states ?? {}
+      dispatch(applyRoomSyncBulk({ states }))
+      if (states[MEETING_LIFECYCLE_CHANNEL] !== undefined) {
+        dispatch(setMeetingLifecycle(parseMeetingLifecycle(states[MEETING_LIFECYCLE_CHANNEL])))
+      }
     }
 
     const onRoomSync = (payload: { channel: string; payload: unknown }) => {
       dispatch(applyRoomSyncPatch({ channel: payload.channel, payload: payload.payload }))
+      if (payload.channel === MEETING_LIFECYCLE_CHANNEL) {
+        dispatch(setMeetingLifecycle(parseMeetingLifecycle(payload.payload)))
+      }
+    }
+
+    const onRoomSyncError = (payload: { message?: string }) => {
+      console.error('room_sync_error', payload)
     }
 
     const onConnect = () => {
@@ -118,6 +203,10 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
     client.on('join_error', onJoinError)
     client.on('room_sync_bulk', onRoomSyncBulk)
     client.on('room_sync', onRoomSync)
+    client.on('room_sync_error', onRoomSyncError)
+    client.on('meeting_lifecycle', onMeetingLifecycle)
+    client.on('meeting_error', onMeetingError)
+    client.on('role_updated', onRoleUpdated)
 
     return () => {
       client.off('connect', onConnect)
@@ -127,17 +216,23 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       client.off('join_error', onJoinError)
       client.off('room_sync_bulk', onRoomSyncBulk)
       client.off('room_sync', onRoomSync)
+      client.off('room_sync_error', onRoomSyncError)
+      client.off('meeting_lifecycle', onMeetingLifecycle)
+      client.off('meeting_error', onMeetingError)
+      client.off('role_updated', onRoleUpdated)
       client.disconnect()
       socketRef.current = null
       setSocket(null)
       setPresenceJoined(false)
       dispatch(resetRoomSync())
+      dispatch(resetDocuments())
+      dispatch(resetMeetingLifecycle())
     }
   }, [entryCompleted, roomId, userId, displayName, role, profileImage, dispatch])
 
   const value = useMemo<MeetingSocketContextValue>(
-    () => ({ socket, presenceJoined, emitRoomSync }),
-    [socket, presenceJoined, emitRoomSync],
+    () => ({ socket, presenceJoined, emitRoomSync, startMeeting, pauseMeeting }),
+    [socket, presenceJoined, emitRoomSync, startMeeting, pauseMeeting],
   )
 
   return <MeetingSocketContext.Provider value={value}>{children}</MeetingSocketContext.Provider>

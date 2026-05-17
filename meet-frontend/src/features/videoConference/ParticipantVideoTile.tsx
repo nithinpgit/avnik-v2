@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
+import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
 import { useMediasoupMedia } from '../mediasoup/MediasoupMediaProvider'
 import {
   closeParticipantMenu,
@@ -32,6 +33,7 @@ function liveTrack(stream: MediaStream | null | undefined, kind: 'audio' | 'vide
 export function ParticipantVideoTile({ participant, tileIndex = 0 }: ParticipantVideoTileProps) {
   const dispatch = useAppDispatch()
   const { remoteStreams } = useMediasoupMedia()
+  const meetingLive = useAppSelector(selectIsMeetingLive)
   const localParticipantId = useAppSelector(selectLocalParticipantId)
   const localStream = useAppSelector(selectLocalStream)
   const cameraStatus = useAppSelector(selectCameraStatus)
@@ -65,13 +67,13 @@ export function ParticipantVideoTile({ participant, tileIndex = 0 }: Participant
   }, [menuOpen, dispatch])
 
   const localVideoLive = Boolean(liveTrack(localStream, 'video'))
-  const showLocalVideo = isLocal && localVideoLive && cameraStatus === 'ready'
+  const showLocalVideo = meetingLive && isLocal && localVideoLive && cameraStatus === 'ready'
 
   const remoteVideoLive = Boolean(liveTrack(remoteStream, 'video'))
-  const showRemoteVideo = !isLocal && remoteVideoLive
+  const showRemoteVideo = meetingLive && !isLocal && remoteVideoLive
 
   const remoteAudioOnly =
-    !isLocal && !remoteVideoLive && Boolean(liveTrack(remoteStream, 'audio'))
+    meetingLive && !isLocal && !remoteVideoLive && Boolean(liveTrack(remoteStream, 'audio'))
 
   const showVideo = showLocalVideo || showRemoteVideo
   const showCameraIssue = isLocal && (cameraStatus === 'denied' || cameraStatus === 'error')

@@ -33,6 +33,10 @@ export class Peer {
     return this.data.role
   }
 
+  get name(): string {
+    return this.data.name
+  }
+
   setSocketId(socketId: string): void {
     this.data.socketId = socketId
   }

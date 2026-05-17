@@ -1,10 +1,14 @@
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
+import { localStreamMeetsMode, mediaConstraintsFor } from '../preMeeting/mediaDeviceUtils'
+import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
 import {
   selectPreMeetingEntryCompleted,
   selectPreMeetingLastMediaMode,
   selectPreMeetingOpen,
+  selectPreferredAudioDeviceId,
+  selectPreferredVideoDeviceId,
 } from '../preMeeting/preMeetingSlice'
 import {
   setCameraErrorMessage,
@@ -13,25 +17,32 @@ import {
 } from './videoConferenceSlice'
 
 /**
- * Ensures a local MediaStream exists for the meeting when pre-meeting did not leave one
- * (e.g. user skipped device preview). Constraints follow `lastMediaMode` so the SFU can publish
- * the right tracks.
+ * Ensures a local MediaStream with live tracks exists while the meeting is live.
+ * Re-acquires devices after pause/resume when tracks were stopped or ended.
  */
 export function LocalCameraManager() {
   const dispatch = useAppDispatch()
   const preMeetingOpen = useAppSelector(selectPreMeetingOpen)
   const entryCompleted = useAppSelector(selectPreMeetingEntryCompleted)
+  const meetingLive = useAppSelector(selectIsMeetingLive)
   const lastMediaMode = useAppSelector(selectPreMeetingLastMediaMode)
+  const preferredVideoDeviceId = useAppSelector(selectPreferredVideoDeviceId)
+  const preferredAudioDeviceId = useAppSelector(selectPreferredAudioDeviceId)
 
   useEffect(() => {
-    if (preMeetingOpen || !entryCompleted) {
-      return
-    }
-    if (store.getState().videoConference.localStream) {
+    if (preMeetingOpen || !entryCompleted || !meetingLive) {
       return
     }
 
     const mode = lastMediaMode ?? 'none'
+    const existing = store.getState().videoConference.localStream
+
+    if (localStreamMeetsMode(existing, mode)) {
+      return
+    }
+
+    existing?.getTracks().forEach((t) => t.stop())
+    dispatch(setLocalStream(null))
 
     if (mode === 'none') {
       dispatch(setCameraStatus('idle'))
@@ -39,27 +50,23 @@ export function LocalCameraManager() {
       return
     }
 
-    let stream: MediaStream | null = null
-    let cancelled = false
-
-    const videoCons =
-      mode === 'both' || mode === 'webcam_only'
-        ? ({ facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } as const)
-        : false
-    const audioCons = mode === 'both' || mode === 'mic_only'
-
-    if (!videoCons && !audioCons) {
+    const cons = mediaConstraintsFor(
+      mode,
+      preferredVideoDeviceId ?? '',
+      preferredAudioDeviceId ?? '',
+    )
+    if (!cons) {
       return
     }
+
+    let stream: MediaStream | null = null
+    let cancelled = false
 
     dispatch(setCameraStatus('pending'))
     dispatch(setCameraErrorMessage(null))
 
     navigator.mediaDevices
-      .getUserMedia({
-        video: videoCons || false,
-        audio: audioCons || false,
-      })
+      .getUserMedia(cons)
       .then((s) => {
         if (cancelled) {
           s.getTracks().forEach((t) => t.stop())
@@ -67,7 +74,8 @@ export function LocalCameraManager() {
         }
         stream = s
         dispatch(setLocalStream(s))
-        if (videoCons) {
+        const wantsVideo = mode === 'both' || mode === 'webcam_only'
+        if (wantsVideo) {
           dispatch(setCameraStatus('ready'))
         } else {
           dispatch(setCameraStatus('idle'))
@@ -84,11 +92,16 @@ export function LocalCameraManager() {
     return () => {
       cancelled = true
       stream?.getTracks().forEach((t) => t.stop())
-      dispatch(setLocalStream(null))
-      dispatch(setCameraStatus('idle'))
-      dispatch(setCameraErrorMessage(null))
     }
-  }, [preMeetingOpen, entryCompleted, lastMediaMode, dispatch])
+  }, [
+    preMeetingOpen,
+    entryCompleted,
+    meetingLive,
+    lastMediaMode,
+    preferredVideoDeviceId,
+    preferredAudioDeviceId,
+    dispatch,
+  ])
 
   return null
 }
