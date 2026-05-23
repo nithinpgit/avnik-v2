@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 import documentsReducer from '../features/documents/documentsSlice'
+import videoShareReducer from '../features/videoShare/videoShareSlice'
 import notificationsReducer from '../features/documents/notificationsSlice'
 import meetingLifecycleReducer from '../features/meeting/meetingLifecycleSlice'
 import meetingSessionReducer from '../features/meetingSession/meetingSessionSlice'
@@ -15,6 +16,7 @@ export const store = configureStore({
     meetingSession: meetingSessionReducer,
     meetingLifecycle: meetingLifecycleReducer,
     documents: documentsReducer,
+    videoShare: videoShareReducer,
     notifications: notificationsReducer,
     roomSync: roomSyncReducer,
     videoConference: videoConferenceReducer,

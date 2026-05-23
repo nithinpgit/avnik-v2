@@ -15,6 +15,7 @@ import {
   type RoomFileRecord,
   isPresentableExtension,
 } from './presentationTypes'
+import { VIDEO_SHARE_CHANNEL } from '../videoShare/videoShareTypes'
 
 export function usePresentationSync() {
   const dispatch = useAppDispatch()
@@ -83,6 +84,8 @@ export function usePresentationSync() {
         return
       }
 
+      emitRoomSync(VIDEO_SHARE_CHANNEL, { active: false })
+
       const payload: PresentationSyncPayload = {
         active: true,
         fileId: file.id,
@@ -99,7 +102,7 @@ export function usePresentationSync() {
         pushToast({ message: 'Document shared with everyone.', variant: 'success', durationMs: 3500 }),
       )
     },
-    [dispatch, emitPresentation, isHost, meetingLive, resolvePageCount],
+    [dispatch, emitPresentation, emitRoomSync, isHost, meetingLive, resolvePageCount],
   )
 
   const closePresentation = useCallback(() => {

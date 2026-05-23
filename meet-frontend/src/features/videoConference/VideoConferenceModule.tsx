@@ -8,6 +8,7 @@ import { useMeetingElapsedLabel } from '../meeting/useMeetingElapsedLabel'
 import { openPreMeetingSettings } from '../preMeeting/preMeetingSlice'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
 import { ScreenShareStage } from '../screenShare/ScreenShareStage'
+import { VideoShareStage } from '../videoShare/VideoShareStage'
 import { MeetingBottomToolbar } from './MeetingBottomToolbar'
 import { LocalCameraManager } from './LocalCameraManager'
 import { ParticipantVideoTile } from './ParticipantVideoTile'
@@ -236,6 +237,7 @@ export function VideoConferenceModule() {
       ) : null}
 
       <ScreenShareStage />
+      <VideoShareStage />
 
       <MeetingBottomToolbar />
 

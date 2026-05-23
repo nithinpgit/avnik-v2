@@ -1,0 +1,89 @@
+.share-video-upload-btn {
+  margin-top: 8px;
+}
+
+.share-video-upload-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #145388;
+  flex-shrink: 0;
+}
+
+.share-video-or {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 22px 0 18px;
+  position: relative;
+}
+
+.share-video-or::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 50%;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.share-video-or__label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.share-video-youtube-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  padding-bottom: 20px;
+}
+
+.share-video-youtube-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.share-video-youtube-input:focus {
+  outline: 2px solid #426de5;
+  outline-offset: 0;
+  border-color: #426de5;
+}
+
+.share-video-youtube-share-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 4px;
+  padding: 0 20px;
+  background: #145388;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.share-video-youtube-share-btn:hover:not(:disabled) {
+  background: #0f71a3;
+}
+
+.share-video-youtube-share-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

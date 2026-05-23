@@ -19,9 +19,13 @@ export const ALLOWED_FILE_EXTENSIONS = new Set([
   'jpeg',
   'gif',
   'webp',
+  'mp4',
 ])
 
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+export const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024
+/** Multer hard limit (must be >= largest per-type cap). */
+export const MAX_UPLOAD_BYTES_LIMIT = MAX_VIDEO_UPLOAD_BYTES
 
 export type RoomFileDto = {
   id: string
@@ -98,11 +102,14 @@ export class FilesService {
     const ext = this.extensionFromName(params.originalName)
     if (!ALLOWED_FILE_EXTENSIONS.has(ext)) {
       throw new BadRequestException(
-        'Invalid file type. Allowed: pdf, doc, docx, xls, xlsx, ppt, pptx, png, jpg, jpeg, gif, webp',
+        'Invalid file type. Allowed: pdf, doc, docx, xls, xlsx, ppt, pptx, png, jpg, jpeg, gif, webp, mp4',
       )
     }
-    if (params.buffer.length > MAX_UPLOAD_BYTES) {
-      throw new BadRequestException('File size should be less than 20 MB')
+    const maxBytes = ext === 'mp4' ? MAX_VIDEO_UPLOAD_BYTES : MAX_UPLOAD_BYTES
+    if (params.buffer.length > maxBytes) {
+      throw new BadRequestException(
+        ext === 'mp4' ? 'File size should be less than 50 MB' : 'File size should be less than 20 MB',
+      )
     }
 
     const storedName = `${randomUUID()}.${ext}`
@@ -134,17 +141,43 @@ export class FilesService {
     return this.toDto(saved)
   }
 
+  async saveYoutubeLink(params: {
+    roomId: string
+    videoId: string
+    title?: string
+    uploadedBy?: string
+  }): Promise<RoomFileDto> {
+    const videoId = params.videoId.trim()
+    if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+      throw new BadRequestException('Invalid YouTube video id')
+    }
+    const entity = this.filesRepo.create({
+      roomId: params.roomId,
+      originalName: params.title?.trim() || `YouTube video (${videoId})`,
+      storedName: videoId,
+      mimeType: 'video/youtube',
+      extension: 'youtube',
+      sizeBytes: '0',
+      pageCount: 0,
+      uploadedBy: params.uploadedBy?.trim() || null,
+    })
+    const saved = await this.filesRepo.save(entity)
+    return this.toDto(saved)
+  }
+
   async deleteFile(fileId: string): Promise<void> {
     const entity = await this.filesRepo.findOne({ where: { id: fileId } })
     if (!entity) {
       throw new NotFoundException('File not found')
     }
-    const fullPath = join(this.roomDir(entity.roomId), entity.storedName)
-    if (existsSync(fullPath)) {
-      try {
-        unlinkSync(fullPath)
-      } catch {
-        /* best-effort */
+    if (entity.extension !== 'youtube') {
+      const fullPath = join(this.roomDir(entity.roomId), entity.storedName)
+      if (existsSync(fullPath)) {
+        try {
+          unlinkSync(fullPath)
+        } catch {
+          /* best-effort */
+        }
       }
     }
     await this.filesRepo.delete({ id: fileId })

@@ -8,6 +8,7 @@ import { MediasoupMediaProvider } from './features/mediasoup/MediasoupMediaProvi
 import { MeetingSocketProvider } from './features/meetingRoom/MeetingSocketProvider'
 import { NotificationStack } from './features/documents/NotificationStack'
 import { ShareDocumentModal } from './features/documents/ShareDocumentModal'
+import { ShareVideoModal } from './features/videoShare/ShareVideoModal'
 import { PreMeetingModal } from './features/preMeeting/PreMeetingModal'
 import { setLocalParticipantId } from './features/videoConference/videoConferenceSlice'
 import { VideoConferenceModule } from './features/videoConference/VideoConferenceModule'
@@ -37,6 +38,7 @@ function App() {
             <MeetingChatChrome />
             <PreMeetingModal />
             <ShareDocumentModal />
+            <ShareVideoModal />
             <NotificationStack />
           </MediasoupMediaProvider>
         </MeetingChatProvider>

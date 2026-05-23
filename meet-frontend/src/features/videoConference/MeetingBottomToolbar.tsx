@@ -6,6 +6,7 @@ import {
   openShareDocumentModal,
   selectPresentationVisible,
 } from '../documents/documentsSlice'
+import { openShareVideoModal, selectVideoShareVisible } from '../videoShare/videoShareSlice'
 import { pushToast } from '../documents/notificationsSlice'
 import { useMediasoupMedia } from '../mediasoup/MediasoupMediaProvider'
 import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
@@ -36,6 +37,7 @@ export function MeetingBottomToolbar() {
   const isHost = useIsMeetingHost()
   const { isScreenSharing, startScreenShare } = useMediasoupMedia()
   const presentationActive = useAppSelector(selectPresentationVisible)
+  const videoShareActive = useAppSelector(selectVideoShareVisible)
   const [micOn, setMicOn] = useState(true)
   const [camOn, setCamOn] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -157,10 +159,19 @@ export function MeetingBottomToolbar() {
             </button>
             <button
               type="button"
-              className="dock-btn meeting-tooltip meeting-tooltip--top"
+              className={`dock-btn meeting-tooltip meeting-tooltip--top${videoShareActive ? ' dock-btn--active' : ''}`}
               data-tooltip="Share Video"
               aria-label="Share video"
-              onClick={() => notifySoon('Video share')}
+              aria-pressed={videoShareActive}
+              onClick={() => {
+                if (!isHost) {
+                  dispatch(
+                    pushToast({ message: 'Only the host can share a video.', variant: 'error' }),
+                  )
+                  return
+                }
+                dispatch(openShareVideoModal())
+              }}
             >
               <IconVideoShare />
             </button>

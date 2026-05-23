@@ -12,10 +12,16 @@ import {
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { memoryStorage } from 'multer'
-import { FilesService, MAX_UPLOAD_BYTES } from './files.service'
+import { FilesService, MAX_UPLOAD_BYTES_LIMIT } from './files.service'
 
 class UpdatePageCountDto {
   pageCount!: number
+}
+
+class SaveYoutubeDto {
+  videoId!: string
+  title?: string
+  uploadedBy?: string
 }
 
 @Controller('files')
@@ -32,7 +38,7 @@ export class FilesController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
-      limits: { fileSize: MAX_UPLOAD_BYTES },
+      limits: { fileSize: MAX_UPLOAD_BYTES_LIMIT },
     }),
   )
   async upload(
@@ -52,6 +58,23 @@ export class FilesController {
       mimeType: file.mimetype,
       uploadedBy,
       pageCount: Number.isFinite(pageCount) ? pageCount : undefined,
+    })
+    return { status: 'success', file: saved }
+  }
+
+  @Post('rooms/:roomId/youtube')
+  async saveYoutube(
+    @Param('roomId') roomId: string,
+    @Body() body: SaveYoutubeDto,
+  ) {
+    if (!body?.videoId?.trim()) {
+      throw new BadRequestException('videoId is required')
+    }
+    const saved = await this.files.saveYoutubeLink({
+      roomId,
+      videoId: body.videoId,
+      title: body.title,
+      uploadedBy: body.uploadedBy,
     })
     return { status: 'success', file: saved }
   }

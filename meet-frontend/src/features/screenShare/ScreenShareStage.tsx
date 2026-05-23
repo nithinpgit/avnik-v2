@@ -4,6 +4,7 @@ import { useMediasoupMedia } from '../mediasoup/MediasoupMediaProvider'
 import { selectMeetingUserId } from '../meetingSession/meetingSessionSlice'
 import { selectParticipants } from '../videoConference/videoConferenceSlice'
 import { IconScreenShare } from '../videoConference/MeetingIcons'
+import { selectVideoShareVisible } from '../videoShare/videoShareSlice'
 import { selectScreenShareSync } from './selectScreenShareSync'
 import './screenShareStage.css'
 
@@ -135,6 +136,7 @@ function RemoteScreenShareStage({ stream, label, streamKey }: RemoteScreenShareS
 export function ScreenShareStage() {
   const { remoteScreenStreams, localScreenStream, isScreenSharing, stopScreenShare } =
     useMediasoupMedia()
+  const videoShareActive = useAppSelector(selectVideoShareVisible)
   const screenShareSync = useAppSelector(selectScreenShareSync)
   const userId = useAppSelector(selectMeetingUserId)
   const participants = useAppSelector(selectParticipants)
@@ -167,6 +169,10 @@ export function ScreenShareStage() {
   const isLocalPresenter =
     isScreenSharing &&
     (screenShareSync?.active !== false || screenShareSync?.presenterId === userId)
+
+  if (videoShareActive) {
+    return null
+  }
 
   if (isLocalPresenter) {
     return <LocalScreenSharePanel screenStream={localScreenStream} onStop={stopScreenShare} />
