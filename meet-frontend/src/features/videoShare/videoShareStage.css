@@ -1,73 +1,114 @@
-.video-share-stage-wrap {
+/* Full stage panel — solid white over whiteboard */
+.meeting-content-stage.video-share-stage {
   z-index: 27;
+  background: #ffffff;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--meeting-stage-inset, 16px) 20px;
-  box-sizing: border-box;
-  pointer-events: none;
-}
-
-.video-share-frame {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
   pointer-events: auto;
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  max-width: 100%;
-  max-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #020617;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.2);
-  border: 1px solid rgba(15, 23, 42, 0.35);
+  animation: video-share-fade-in 0.35s ease;
 }
 
-.video-share-close {
+.video-share-close-btn {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 2;
-  width: 32px;
-  height: 32px;
+  top: 12px;
+  left: 12px;
+  z-index: 30;
+  width: 36px;
+  height: 36px;
   border: none;
   border-radius: 4px;
   background: #145388;
   color: #ffffff;
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(20, 83, 136, 0.35);
+  box-shadow: 0 2px 10px rgba(20, 83, 136, 0.35);
   transition: background-color 0.2s ease;
 }
 
-.video-share-close:hover {
+.video-share-close-btn:hover {
   background: #0f71a3;
 }
 
-.video-share-close:focus-visible {
+.video-share-close-btn:focus-visible {
   outline: 2px solid #426de5;
   outline-offset: 2px;
 }
 
+.video-share-layer {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.video-share-slide-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  overflow: hidden;
+  container-type: size;
+}
+
+/* Fills stage; video scales so width OR height touches edges (object-fit: contain) */
+.video-share-media-host {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+}
+
 .video-share-stage__media {
+  display: block;
   width: 100%;
   height: 100%;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  display: block;
-  background: #000000;
+  background: #ffffff;
+}
+
+.video-share-youtube-host {
+  position: relative;
+  width: min(100cqw, calc(100cqh * 16 / 9));
+  height: min(100cqh, calc(100cqw * 9 / 16));
+  max-width: 100%;
+  max-height: 100%;
+  flex-shrink: 0;
 }
 
 .video-share-stage__youtube {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   border: none;
-  min-height: min(70vh, 100%);
-  aspect-ratio: 16 / 9;
+  display: block;
+}
+
+@keyframes video-share-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

@@ -78,18 +78,20 @@ function Mp4Player({ src, sync, isHost, onSync }: Mp4PlayerProps) {
   }
 
   return (
-    <video
-      ref={videoRef}
-      className="video-share-stage__media"
-      src={resolveFileAssetUrl(src)}
-      playsInline
-      controls={isHost}
-      autoPlay={sync.isPlaying}
-      onPlay={onPlay}
-      onPause={onPause}
-      onSeeked={onSeeked}
-      onTimeUpdate={emitState}
-    />
+    <div className="video-share-media-host">
+      <video
+        ref={videoRef}
+        className="video-share-stage__media"
+        src={resolveFileAssetUrl(src)}
+        playsInline
+        controls={isHost}
+        autoPlay={sync.isPlaying}
+        onPlay={onPlay}
+        onPause={onPause}
+        onSeeked={onSeeked}
+        onTimeUpdate={emitState}
+      />
+    </div>
   )
 }
 
@@ -114,13 +116,15 @@ function YoutubePlayer({ videoId, sync, isHost }: YoutubePlayerProps) {
   }, [isHost, sync.currentTimeSec, sync.isPlaying, videoId])
 
   return (
-    <iframe
-      className="video-share-stage__media video-share-stage__youtube"
-      title={sync.originalName}
-      src={embedSrc}
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-    />
+    <div className="video-share-youtube-host">
+      <iframe
+        className="video-share-stage__youtube"
+        title={sync.originalName}
+        src={embedSrc}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
   )
 }
 
@@ -137,28 +141,35 @@ export function VideoShareStage() {
       : null
 
   return (
-    <div className="meeting-content-stage video-share-stage-wrap">
-      <div className="video-share-frame" role="region" aria-label={`Shared video: ${video.originalName}`}>
-        {isHost ? (
-          <button
-            type="button"
-            className="video-share-close"
-            aria-label="Close shared video"
-            onClick={closeVideoShare}
-          >
-            ×
-          </button>
-        ) : null}
-        {video.source === 'youtube' && resolvedYoutubeId ? (
-          <YoutubePlayer videoId={resolvedYoutubeId} sync={video} isHost={isHost} />
-        ) : (
-          <Mp4Player
-            src={video.fileUrl}
-            sync={video}
-            isHost={isHost}
-            onSync={patchVideoShare}
-          />
-        )}
+    <div
+      className="meeting-content-stage video-share-stage"
+      role="region"
+      aria-label={`Shared video: ${video.originalName}`}
+    >
+      {isHost ? (
+        <button
+          type="button"
+          className="video-share-close-btn meeting-tooltip meeting-tooltip--bottom"
+          data-tooltip="Close video"
+          aria-label="Close shared video"
+          onClick={closeVideoShare}
+        >
+          ×
+        </button>
+      ) : null}
+      <div className="video-share-layer">
+        <div className="video-share-slide-wrap">
+          {video.source === 'youtube' && resolvedYoutubeId ? (
+            <YoutubePlayer videoId={resolvedYoutubeId} sync={video} isHost={isHost} />
+          ) : (
+            <Mp4Player
+              src={video.fileUrl}
+              sync={video}
+              isHost={isHost}
+              onSync={patchVideoShare}
+            />
+          )}
+        </div>
       </div>
     </div>
   )
