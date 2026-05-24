@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
 import { PRESENTATION_CHANNEL } from '../documents/presentationTypes'
 import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
-import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
+import { useMeetingPermissions } from '../participantControls/useMeetingPermissions'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
 import { pushToast } from '../documents/notificationsSlice'
 import type { RoomFileRecord } from '../documents/presentationTypes'
@@ -20,7 +20,7 @@ import { selectActiveVideoShare, setVideoShare } from './videoShareSlice'
 export function useVideoShareSync() {
   const dispatch = useAppDispatch()
   const { emitRoomSync } = useMeetingSocket()
-  const isHost = useIsMeetingHost()
+  const { canPresentContent } = useMeetingPermissions()
   const meetingLive = useAppSelector(selectIsMeetingLive)
   const videoShareDoc = useAppSelector((s) => s.roomSync.channels[VIDEO_SHARE_CHANNEL])
 
@@ -55,8 +55,8 @@ export function useVideoShareSync() {
 
   const loadVideoShare = useCallback(
     async (file: RoomFileRecord) => {
-      if (!isHost) {
-        dispatch(pushToast({ message: 'Only the host can share a video.', variant: 'error' }))
+      if (!canPresentContent) {
+        dispatch(pushToast({ message: 'Only the host or a presenter can share a video.', variant: 'error' }))
         return
       }
       if (!meetingLive) {
@@ -80,23 +80,23 @@ export function useVideoShareSync() {
         pushToast({ message: 'Video shared with everyone.', variant: 'success', durationMs: 3500 }),
       )
     },
-    [buildPayloadFromFile, dispatch, emitRoomSync, emitVideoShare, isHost, meetingLive],
+    [buildPayloadFromFile, dispatch, emitRoomSync, emitVideoShare, canPresentContent, meetingLive],
   )
 
   const closeVideoShare = useCallback(() => {
-    if (!isHost) return
+    if (!canPresentContent) return
     emitVideoShare(null)
     dispatch(pushToast({ message: 'Video closed.', variant: 'info', durationMs: 2500 }))
-  }, [dispatch, emitVideoShare, isHost])
+  }, [dispatch, emitVideoShare, canPresentContent])
 
   const patchVideoShare = useCallback(
     (patch: Partial<VideoShareSyncPayload>) => {
-      if (!isHost) return
+      if (!canPresentContent) return
       const prev = store.getState().videoShare.videoShare
       if (!prev) return
       emitVideoShare({ ...prev, ...patch })
     },
-    [emitVideoShare, isHost],
+    [emitVideoShare, canPresentContent],
   )
 
   const videoShare = useAppSelector(selectActiveVideoShare)

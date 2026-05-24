@@ -19,7 +19,14 @@ import { MeetingLifecycleService } from '../meeting/meeting-lifecycle.service'
 import { RoomSyncDto } from '../sync/dto/room-sync.dto'
 import { MAX_ROOM_SYNC_CHANNEL_BYTES, RoomSyncService } from '../sync/room-sync.service'
 import { JoinRoomDto } from './dto/join-room.dto'
+import { ParticipantControlDto } from './dto/participant-control.dto'
 import { RoomsService } from './rooms.service'
+import {
+  PARTICIPANT_MODERATION_CHANNEL,
+  applyModerationAction,
+  parseModerationPayload,
+  type ParticipantControlAction,
+} from '../participant/participant-moderation.types'
 
 type SocketData = {
   roomId?: string
@@ -300,6 +307,141 @@ export class RoomsGateway implements OnGatewayInit, OnGatewayDisconnect {
       const msg = e instanceof Error ? e.message : 'Send failed'
       client.emit('chat_error', { message: msg })
     }
+  }
+
+  @SubscribeMessage('participant_control')
+  async participantControl(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: unknown,
+  ): Promise<void> {
+    const dto = plainToInstance(ParticipantControlDto, body ?? {})
+    const errors = validateSync(dto, { forbidUnknownValues: false })
+    if (errors.length > 0) {
+      client.emit('participant_control_error', {
+        message: 'Invalid participant_control payload',
+        details: errors.map((e) => ({ property: e.property, constraints: e.constraints })),
+      })
+      return
+    }
+
+    const data = client.data as SocketData
+    if (!data.roomId || data.roomId !== dto.roomId || !data.userId) {
+      client.emit('participant_control_error', { message: 'Must join_room before participant_control' })
+      return
+    }
+
+    const room = this.roomsService.getRoom(dto.roomId)
+    if (!room) {
+      client.emit('participant_control_error', { message: 'Room not found' })
+      return
+    }
+
+    if (room.hostUserId !== data.userId) {
+      client.emit('participant_control_error', { message: 'Only the host can control participants' })
+      return
+    }
+
+    const target = room.peersByUserId.get(dto.targetUserId)
+    if (!target) {
+      client.emit('participant_control_error', { message: 'Participant not in room' })
+      return
+    }
+
+    if (dto.targetUserId === data.userId) {
+      client.emit('participant_control_error', { message: 'Cannot control yourself' })
+      return
+    }
+
+    if (target.role === 'host') {
+      client.emit('participant_control_error', { message: 'Cannot control the meeting host' })
+      return
+    }
+
+    if (dto.action === 'kick') {
+      await this.kickParticipant(dto.roomId, dto.targetUserId, client)
+      return
+    }
+
+    try {
+      const currentRaw = await this.roomSyncService.getChannel(dto.roomId, PARTICIPANT_MODERATION_CHANNEL)
+      const current = parseModerationPayload(currentRaw)
+      const next = applyModerationAction(current, dto.targetUserId, dto.action)
+      await this.roomSyncService.setChannel(dto.roomId, PARTICIPANT_MODERATION_CHANNEL, next)
+      this.server.to(dto.roomId).emit('room_sync', {
+        channel: PARTICIPANT_MODERATION_CHANNEL,
+        payload: next,
+      })
+      this.emitParticipantMediaCommand(dto.roomId, dto.targetUserId, dto.action, next)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Control failed'
+      client.emit('participant_control_error', { message: msg })
+    }
+  }
+
+  private emitParticipantMediaCommand(
+    roomId: string,
+    targetUserId: string,
+    action: ParticipantControlAction,
+    moderation: ReturnType<typeof parseModerationPayload>,
+  ) {
+    const room = this.roomsService.getRoom(roomId)
+    const target = room?.peersByUserId.get(targetUserId)
+    if (!target) return
+
+    if (
+      action === 'mute_mic' ||
+      action === 'unmute_mic' ||
+      action === 'disable_cam' ||
+      action === 'enable_cam'
+    ) {
+      const state = moderation.users[targetUserId]
+      if (!state) return
+      this.server.to(target.socketId).emit('participant_media_policy', {
+        micAllowed: state.micAllowed,
+        camAllowed: state.camAllowed,
+      })
+    }
+
+    if (action === 'make_presenter' || action === 'revoke_presenter') {
+      this.server.to(target.socketId).emit('presenter_power_changed', {
+        isPresenter: action === 'make_presenter',
+      })
+    }
+  }
+
+  private async kickParticipant(roomId: string, targetUserId: string, hostClient: Socket): Promise<void> {
+    const room = this.roomsService.getRoom(roomId)
+    if (!room) return
+
+    const target = room.peersByUserId.get(targetUserId)
+    if (!target) {
+      hostClient.emit('participant_control_error', { message: 'Participant not in room' })
+      return
+    }
+
+    try {
+      const currentRaw = await this.roomSyncService.getChannel(roomId, PARTICIPANT_MODERATION_CHANNEL)
+      const current = parseModerationPayload(currentRaw)
+      const next = applyModerationAction(current, targetUserId, 'kick')
+      await this.roomSyncService.setChannel(roomId, PARTICIPANT_MODERATION_CHANNEL, next)
+      this.server.to(roomId).emit('room_sync', {
+        channel: PARTICIPANT_MODERATION_CHANNEL,
+        payload: next,
+      })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Kick failed'
+      hostClient.emit('participant_control_error', { message: msg })
+      return
+    }
+
+    this.server.to(target.socketId).emit('kicked_from_meeting', {
+      message: 'You were removed from the meeting by the host.',
+    })
+    this.server.sockets.sockets.get(target.socketId)?.disconnect(true)
+    room.removeByUserId(targetUserId)
+    this.roomsService.pruneEmpty(roomId)
+    hostClient.to(roomId).emit('peer_left', { userId: targetUserId })
+    void this.emitRoomSnapshot(roomId)
   }
 
   @SubscribeMessage('chat_mark_read')

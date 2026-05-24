@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useAppSelector } from '../../app/hooks'
-import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
+import { useMeetingPermissions } from '../participantControls/useMeetingPermissions'
 import { selectActivePresentation } from './documentsSlice'
 import {
   IconPageNext,
@@ -17,15 +17,15 @@ const ZOOM_MAX = 200
 
 export function DocumentToolbar() {
   const presentation = useAppSelector(selectActivePresentation)
-  const isHost = useIsMeetingHost()
+  const { canPresentContent } = useMeetingPermissions()
   const { patchPresentation } = usePresentationSync()
 
   const apply = useCallback(
     (patch: Parameters<typeof patchPresentation>[0]) => {
-      if (!isHost) return
+      if (!canPresentContent) return
       patchPresentation(patch)
     },
-    [isHost, patchPresentation],
+    [canPresentContent, patchPresentation],
   )
 
   if (!presentation?.active) return null
@@ -42,7 +42,7 @@ export function DocumentToolbar() {
           className="document-toolbar__btn meeting-tooltip meeting-tooltip--top"
           data-tooltip="Zoom Out"
           aria-label="Zoom out"
-          disabled={!isHost || zoom <= ZOOM_MIN}
+          disabled={!canPresentContent || zoom <= ZOOM_MIN}
           onClick={() => apply({ zoomPercent: Math.max(ZOOM_MIN, zoom - ZOOM_STEP) })}
         >
           <IconZoomOut />
@@ -53,7 +53,7 @@ export function DocumentToolbar() {
           className="document-toolbar__btn meeting-tooltip meeting-tooltip--top"
           data-tooltip="Zoom In"
           aria-label="Zoom in"
-          disabled={!isHost || zoom >= ZOOM_MAX}
+          disabled={!canPresentContent || zoom >= ZOOM_MAX}
           onClick={() => apply({ zoomPercent: Math.min(ZOOM_MAX, zoom + ZOOM_STEP) })}
         >
           <IconZoomIn />
@@ -67,7 +67,7 @@ export function DocumentToolbar() {
             className="document-toolbar__btn meeting-tooltip meeting-tooltip--top"
             data-tooltip="Previous Page"
             aria-label="Previous page"
-            disabled={!isHost || page <= 1}
+            disabled={!canPresentContent || page <= 1}
             onClick={() => apply({ currentPage: page - 1 })}
           >
             <IconPagePrev />
@@ -76,7 +76,7 @@ export function DocumentToolbar() {
             className="document-toolbar__page-input pagen"
             aria-label="Current page"
             value={page}
-            readOnly={!isHost}
+            readOnly={!canPresentContent}
             onChange={(e) => {
               const n = Number(e.target.value)
               if (Number.isFinite(n) && n >= 1 && n <= total) {
@@ -97,7 +97,7 @@ export function DocumentToolbar() {
             className="document-toolbar__btn meeting-tooltip meeting-tooltip--top"
             data-tooltip="Next Page"
             aria-label="Next page"
-            disabled={!isHost || page >= total}
+            disabled={!canPresentContent || page >= total}
             onClick={() => apply({ currentPage: page + 1 })}
           >
             <IconPageNext />

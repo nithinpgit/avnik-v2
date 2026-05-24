@@ -56,6 +56,30 @@ export class RoomSyncService implements OnModuleDestroy {
     return out
   }
 
+  async getChannel(roomId: string, channel: string): Promise<unknown> {
+    if (this.redis) {
+      try {
+        const raw = await this.redis.hget(this.hashKey(roomId), channel)
+        if (!raw) return null
+        try {
+          return JSON.parse(raw) as unknown
+        } catch {
+          return raw
+        }
+      } catch (e) {
+        this.logger.warn(`Redis hget failed for ${roomId}/${channel}, using memory: ${String(e)}`)
+      }
+    }
+    const m = this.memory.get(roomId)
+    const raw = m?.get(channel)
+    if (!raw) return null
+    try {
+      return JSON.parse(raw) as unknown
+    } catch {
+      return raw
+    }
+  }
+
   async setChannel(roomId: string, channel: string, payload: unknown): Promise<void> {
     const json = JSON.stringify(payload ?? null)
     if (json.length > MAX_ROOM_SYNC_CHANNEL_BYTES) {

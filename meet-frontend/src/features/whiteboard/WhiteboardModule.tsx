@@ -6,6 +6,7 @@ import { useAppSelector } from '../../app/hooks'
 import { selectActivePresentation } from '../documents/documentsSlice'
 import { selectPreMeetingEntryCompleted } from '../preMeeting/preMeetingSlice'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
+import { useMeetingPermissions } from '../participantControls/useMeetingPermissions'
 import { selectConferenceMode } from '../videoConference/videoConferenceSlice'
 import { PresentationLayer } from '../documents/PresentationLayer'
 import { selectWhiteboardTheme } from './whiteboardSlice'
@@ -38,6 +39,7 @@ export function WhiteboardModule() {
   const entryCompleted = useAppSelector(selectPreMeetingEntryCompleted)
   const roomChannels = useAppSelector((s) => s.roomSync.channels)
   const { emitRoomSync } = useMeetingSocket()
+  const { canEditWhiteboard } = useMeetingPermissions()
 
   const pageKey = useMemo(() => getWhiteboardPageKey(presentation), [presentation])
   const syncChannel = useMemo(() => getWhiteboardSyncChannel(pageKey), [pageKey])
@@ -67,7 +69,7 @@ export function WhiteboardModule() {
         debounceTimerRef.current = null
       }
       const api = apiRef.current
-      if (!api || !entryCompleted || suppressEmitRef.current) return
+      if (!api || !entryCompleted || suppressEmitRef.current || !canEditWhiteboard) return
 
       const payload = serializeCurrentScene(api)
       if (!payload) return
@@ -76,7 +78,7 @@ export function WhiteboardModule() {
       const channel = getWhiteboardSyncChannel(targetPageKey)
       emitRoomSync(channel, payload)
     },
-    [emitRoomSync, entryCompleted],
+    [emitRoomSync, entryCompleted, canEditWhiteboard],
   )
 
   const loadPage = useCallback(
@@ -106,7 +108,7 @@ export function WhiteboardModule() {
   )
 
   const schedulePush = useCallback(() => {
-    if (!entryCompleted || suppressEmitRef.current) return
+    if (!entryCompleted || suppressEmitRef.current || !canEditWhiteboard) return
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
@@ -121,7 +123,7 @@ export function WhiteboardModule() {
       localSceneByPageRef.current.set(key, payload.body)
       emitRoomSync(getWhiteboardSyncChannel(key), payload)
     }, 400)
-  }, [emitRoomSync, entryCompleted])
+  }, [emitRoomSync, entryCompleted, canEditWhiteboard])
 
   useEffect(() => {
     return () => {
@@ -220,7 +222,7 @@ export function WhiteboardModule() {
 
   return (
     <section
-      className={`whiteboard-module${presentationActive ? ' whiteboard-module--over-document' : ''}${conferenceMode ? ' whiteboard-module--conference-hidden' : ''}`}
+      className={`whiteboard-module${presentationActive ? ' whiteboard-module--over-document' : ''}${conferenceMode ? ' whiteboard-module--conference-hidden' : ''}${!canEditWhiteboard ? ' whiteboard-module--view-only' : ''}`}
       aria-label="Whiteboard workspace"
     >
       <PresentationLayer />
@@ -229,6 +231,7 @@ export function WhiteboardModule() {
       >
         <Excalidraw
           theme={theme}
+          viewModeEnabled={!canEditWhiteboard}
           initialData={{
             appState: {
               viewBackgroundColor: sceneAppearance.viewBackgroundColor,

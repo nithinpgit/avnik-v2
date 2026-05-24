@@ -13,16 +13,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express'
 import { memoryStorage } from 'multer'
 import { FilesService, MAX_UPLOAD_BYTES_LIMIT } from './files.service'
-
-class UpdatePageCountDto {
-  pageCount!: number
-}
-
-class SaveYoutubeDto {
-  videoId!: string
-  title?: string
-  uploadedBy?: string
-}
+import { SaveYoutubeDto } from './dto/save-youtube.dto'
+import { UpdatePageCountDto } from './dto/update-page-count.dto'
 
 @Controller('files')
 export class FilesController {

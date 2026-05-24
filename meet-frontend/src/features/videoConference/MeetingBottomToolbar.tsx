@@ -9,7 +9,7 @@ import {
 import { openShareVideoModal, selectVideoShareVisible } from '../videoShare/videoShareSlice'
 import { pushToast } from '../documents/notificationsSlice'
 import { useMediasoupMedia } from '../mediasoup/MediasoupMediaProvider'
-import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
+import { useMeetingPermissions } from '../participantControls/useMeetingPermissions'
 import {
   IconAllMicOff,
   IconAllWebcamOff,
@@ -34,7 +34,7 @@ function toggleLocalTrack(kind: 'audio' | 'video'): boolean {
 
 export function MeetingBottomToolbar() {
   const dispatch = useAppDispatch()
-  const isHost = useIsMeetingHost()
+  const { canPresentContent, canUseHostBulkControls } = useMeetingPermissions()
   const { isScreenSharing, startScreenShare } = useMediasoupMedia()
   const presentationActive = useAppSelector(selectPresentationVisible)
   const videoShareActive = useAppSelector(selectVideoShareVisible)
@@ -75,6 +75,10 @@ export function MeetingBottomToolbar() {
   }
 
   const handleScreenShare = () => {
+    if (!canPresentContent) {
+      dispatch(pushToast({ message: 'Presenter access required to share your screen.', variant: 'error' }))
+      return
+    }
     if (screenShareBusy) return
     const wasSharing = isScreenSharing
     setScreenShareBusy(true)
@@ -150,24 +154,30 @@ export function MeetingBottomToolbar() {
             </button>
             <button
               type="button"
-              className={`dock-btn meeting-tooltip meeting-tooltip--top${presentationActive ? ' dock-btn--document-active' : ''}`}
+              className={`dock-btn meeting-tooltip meeting-tooltip--top${presentationActive ? ' dock-btn--document-active' : ''}${!canPresentContent ? ' dock-btn--viewer-disabled' : ''}`}
               data-tooltip="Share Document"
               aria-label="Share document"
-              onClick={() => dispatch(openShareDocumentModal())}
+              disabled={!canPresentContent}
+              onClick={() => {
+                if (!canPresentContent) {
+                  dispatch(pushToast({ message: 'Presenter access required to share documents.', variant: 'error' }))
+                  return
+                }
+                dispatch(openShareDocumentModal())
+              }}
             >
               <IconDocument />
             </button>
             <button
               type="button"
-              className={`dock-btn meeting-tooltip meeting-tooltip--top${videoShareActive ? ' dock-btn--active' : ''}`}
+              className={`dock-btn meeting-tooltip meeting-tooltip--top${videoShareActive ? ' dock-btn--active' : ''}${!canPresentContent ? ' dock-btn--viewer-disabled' : ''}`}
               data-tooltip="Share Video"
               aria-label="Share video"
               aria-pressed={videoShareActive}
+              disabled={!canPresentContent}
               onClick={() => {
-                if (!isHost) {
-                  dispatch(
-                    pushToast({ message: 'Only the host can share a video.', variant: 'error' }),
-                  )
+                if (!canPresentContent) {
+                  dispatch(pushToast({ message: 'Presenter access required to share video.', variant: 'error' }))
                   return
                 }
                 dispatch(openShareVideoModal())
@@ -215,7 +225,7 @@ export function MeetingBottomToolbar() {
             </button>
           </li>
 
-          {isHost ? (
+          {canUseHostBulkControls ? (
             <li className="dock-toolbar-section remove-viewer">
               <button
                 type="button"
@@ -229,7 +239,7 @@ export function MeetingBottomToolbar() {
             </li>
           ) : null}
 
-          {isHost ? (
+          {canUseHostBulkControls ? (
             <li className="dock-toolbar-section remove-viewer">
               <button
                 type="button"

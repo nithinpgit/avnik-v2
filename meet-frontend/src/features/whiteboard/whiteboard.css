@@ -44,3 +44,8 @@
   background: transparent !important;
   background-color: transparent !important;
 }
+
+.whiteboard-module--view-only .excalidraw .layer-ui__wrapper {
+  pointer-events: none;
+  opacity: 0.42;
+}

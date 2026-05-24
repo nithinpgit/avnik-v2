@@ -556,6 +556,10 @@
   padding: 8px 10px 10px;
   background: linear-gradient(to top, rgba(15, 23, 42, 0.82) 0%, transparent 100%);
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .video-tile__label {
@@ -573,6 +577,42 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.video-tile__role-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #bfdbfe;
+  background: rgba(20, 83, 136, 0.75);
+  border: 1px solid rgba(191, 219, 254, 0.35);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.video-tile__badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #ffffff;
+  border-radius: 4px;
+  padding: 3px 6px;
+  pointer-events: none;
+}
+
+.video-tile__badge--muted {
+  background: rgba(220, 38, 38, 0.88);
+}
+
+.video-tile__badge--cam-off {
+  top: 30px;
+  background: rgba(100, 116, 139, 0.92);
 }
 
 /* Center bottom bar — similar to .meeting-tools-box / .m-t-o a */

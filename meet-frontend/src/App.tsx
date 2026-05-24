@@ -9,6 +9,7 @@ import { MeetingSocketProvider } from './features/meetingRoom/MeetingSocketProvi
 import { NotificationStack } from './features/documents/NotificationStack'
 import { ShareDocumentModal } from './features/documents/ShareDocumentModal'
 import { ShareVideoModal } from './features/videoShare/ShareVideoModal'
+import { KickUserConfirmModal } from './features/participantControls/KickUserConfirmModal'
 import { PreMeetingModal } from './features/preMeeting/PreMeetingModal'
 import { setLocalParticipantId } from './features/videoConference/videoConferenceSlice'
 import { VideoConferenceModule } from './features/videoConference/VideoConferenceModule'
@@ -39,6 +40,7 @@ function App() {
             <PreMeetingModal />
             <ShareDocumentModal />
             <ShareVideoModal />
+            <KickUserConfirmModal />
             <NotificationStack />
           </MediasoupMediaProvider>
         </MeetingChatProvider>

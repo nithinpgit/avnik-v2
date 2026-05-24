@@ -23,6 +23,12 @@ import {
 import { selectPreMeetingEntryCompleted } from '../preMeeting/preMeetingSlice'
 import { resetDocuments } from '../documents/documentsSlice'
 import { resetVideoShare } from '../videoShare/videoShareSlice'
+import {
+  applyParticipantModerationRaw,
+  resetParticipantModeration,
+} from '../participantControls/participantModerationSlice'
+import { PARTICIPANT_MODERATION_CHANNEL } from '../participantControls/participantModerationTypes'
+import { pushToast } from '../documents/notificationsSlice'
 import { applyRoomSyncBulk, applyRoomSyncPatch, resetRoomSync } from '../roomSync/roomSyncSlice'
 import {
   applyRoomSnapshot,
@@ -174,6 +180,9 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       if (states[MEETING_LIFECYCLE_CHANNEL] !== undefined) {
         dispatch(setMeetingLifecycle(parseMeetingLifecycle(states[MEETING_LIFECYCLE_CHANNEL])))
       }
+      if (states[PARTICIPANT_MODERATION_CHANNEL] !== undefined) {
+        dispatch(applyParticipantModerationRaw(states[PARTICIPANT_MODERATION_CHANNEL]))
+      }
     }
 
     const onRoomSync = (payload: { channel: string; payload: unknown }) => {
@@ -181,10 +190,58 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       if (payload.channel === MEETING_LIFECYCLE_CHANNEL) {
         dispatch(setMeetingLifecycle(parseMeetingLifecycle(payload.payload)))
       }
+      if (payload.channel === PARTICIPANT_MODERATION_CHANNEL) {
+        dispatch(applyParticipantModerationRaw(payload.payload))
+      }
     }
 
     const onRoomSyncError = (payload: { message?: string }) => {
       console.error('room_sync_error', payload)
+    }
+
+    const onParticipantControlError = (payload: { message?: string }) => {
+      dispatch(
+        pushToast({
+          message: payload.message ?? 'Could not control participant',
+          variant: 'error',
+        }),
+      )
+    }
+
+    const onPresenterPowerChanged = (payload: { isPresenter?: boolean }) => {
+      dispatch(
+        pushToast({
+          message: payload.isPresenter
+            ? 'You can now use whiteboard and sharing tools.'
+            : 'Presenter access was removed.',
+          variant: payload.isPresenter ? 'success' : 'info',
+          durationMs: 4500,
+        }),
+      )
+    }
+
+    const onParticipantMediaPolicy = (payload: { micAllowed?: boolean; camAllowed?: boolean }) => {
+      if (payload.micAllowed === false) {
+        dispatch(pushToast({ message: 'The host muted your microphone.', variant: 'info', durationMs: 4000 }))
+      } else if (payload.micAllowed === true) {
+        dispatch(pushToast({ message: 'The host unmuted your microphone.', variant: 'info', durationMs: 3000 }))
+      }
+      if (payload.camAllowed === false) {
+        dispatch(
+          pushToast({
+            message: 'The host disabled your camera for others. You can still see your preview.',
+            variant: 'info',
+            durationMs: 4500,
+          }),
+        )
+      } else if (payload.camAllowed === true) {
+        dispatch(pushToast({ message: 'The host enabled your camera.', variant: 'info', durationMs: 3000 }))
+      }
+    }
+
+    const onKicked = (payload: { message?: string }) => {
+      window.alert(payload.message ?? 'You were removed from the meeting.')
+      window.location.assign('/')
     }
 
     const onConnect = () => {
@@ -208,6 +265,10 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
     client.on('meeting_lifecycle', onMeetingLifecycle)
     client.on('meeting_error', onMeetingError)
     client.on('role_updated', onRoleUpdated)
+    client.on('participant_control_error', onParticipantControlError)
+    client.on('participant_media_policy', onParticipantMediaPolicy)
+    client.on('presenter_power_changed', onPresenterPowerChanged)
+    client.on('kicked_from_meeting', onKicked)
 
     return () => {
       client.off('connect', onConnect)
@@ -221,6 +282,10 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       client.off('meeting_lifecycle', onMeetingLifecycle)
       client.off('meeting_error', onMeetingError)
       client.off('role_updated', onRoleUpdated)
+      client.off('participant_control_error', onParticipantControlError)
+      client.off('participant_media_policy', onParticipantMediaPolicy)
+      client.off('presenter_power_changed', onPresenterPowerChanged)
+      client.off('kicked_from_meeting', onKicked)
       client.disconnect()
       socketRef.current = null
       setSocket(null)
@@ -228,6 +293,7 @@ export function MeetingSocketProvider({ children }: { children: ReactNode }) {
       dispatch(resetRoomSync())
       dispatch(resetDocuments())
       dispatch(resetVideoShare())
+      dispatch(resetParticipantModeration())
       dispatch(resetMeetingLifecycle())
     }
   }, [entryCompleted, roomId, userId, displayName, role, profileImage, dispatch])

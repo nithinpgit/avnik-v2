@@ -21,6 +21,7 @@ import type {
 import { useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
+import { selectUserModeration } from '../participantControls/participantModerationSlice'
 import { SCREEN_SHARE_SYNC_CHANNEL } from '../screenShare/screenShareSync'
 import { selectScreenShareSync } from '../screenShare/selectScreenShareSync'
 import {
@@ -111,7 +112,7 @@ function mergeRemoteTrack(
 }
 
 export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
-  const { presenceJoined, emitRoomSync } = useMeetingSocket()
+  const { presenceJoined, emitRoomSync, socket } = useMeetingSocket()
   const screenShareSync = useAppSelector(selectScreenShareSync)
   const meetingLive = useAppSelector(selectIsMeetingLive)
   const sfuSessionKey = useAppSelector(selectSfuSessionKey)
@@ -121,6 +122,7 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   const displayName = useAppSelector(selectMeetingDisplayName)
   const lastMediaMode = useAppSelector(selectPreMeetingLastMediaMode)
   const participants = useAppSelector(selectParticipants)
+  const selfModeration = useAppSelector(selectUserModeration(userId ?? ''))
 
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({})
   const [remoteScreenStreams, setRemoteScreenStreams] = useState<Record<string, MediaStream>>({})
@@ -190,6 +192,39 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const applyHostMediaPolicy = useCallback(
+    async (policy: { micAllowed?: boolean; camAllowed?: boolean }) => {
+      const producers = producersRef.current
+      if (policy.micAllowed === false) {
+        try {
+          await producers.audio?.pause()
+        } catch {
+          /* ignore */
+        }
+      } else if (policy.micAllowed === true) {
+        try {
+          await producers.audio?.resume()
+        } catch {
+          /* ignore */
+        }
+      }
+      if (policy.camAllowed === false) {
+        try {
+          await producers.video?.pause()
+        } catch {
+          /* ignore */
+        }
+      } else if (policy.camAllowed === true) {
+        try {
+          await producers.video?.resume()
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+    [],
+  )
+
   const stopScreenShare = useCallback(() => {
     broadcastScreenShare(false)
     const producers = producersRef.current
@@ -213,6 +248,25 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
   }, [broadcastScreenShare])
 
   stopScreenShareRef.current = stopScreenShare
+
+  useEffect(() => {
+    if (sfuStatus !== 'connected') return
+    void applyHostMediaPolicy({
+      micAllowed: selfModeration.micAllowed,
+      camAllowed: selfModeration.camAllowed,
+    })
+  }, [selfModeration.micAllowed, selfModeration.camAllowed, sfuStatus, applyHostMediaPolicy])
+
+  useEffect(() => {
+    if (!socket) return
+    const onPolicy = (payload: { micAllowed?: boolean; camAllowed?: boolean }) => {
+      void applyHostMediaPolicy(payload)
+    }
+    socket.on('participant_media_policy', onPolicy)
+    return () => {
+      socket.off('participant_media_policy', onPolicy)
+    }
+  }, [socket, applyHostMediaPolicy])
 
   const startScreenShare = useCallback(async () => {
     if (isScreenSharing) {
@@ -652,6 +706,22 @@ export function MediasoupMediaProvider({ children }: { children: ReactNode }) {
           }
         }
         producersRef.current = producers
+
+        const mod = selectUserModeration(userId)(store.getState())
+        if (!mod.micAllowed) {
+          try {
+            await producers.audio?.pause()
+          } catch {
+            /* ignore */
+          }
+        }
+        if (!mod.camAllowed) {
+          try {
+            await producers.video?.pause()
+          } catch {
+            /* ignore */
+          }
+        }
 
         const list = (await signaling.request('listProducers')) as {
           producers: { peerId: string; producerId: string; kind: string; source?: string }[]

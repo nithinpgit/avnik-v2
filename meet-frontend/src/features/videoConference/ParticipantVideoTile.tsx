@@ -1,7 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
+import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
 import { useMediasoupMedia } from '../mediasoup/MediasoupMediaProvider'
+import {
+  useParticipantModeration,
+  useParticipantModerationState,
+} from '../participantControls/useParticipantModeration'
 import {
   closeParticipantMenu,
   selectCameraStatus,
@@ -18,14 +23,6 @@ type ParticipantVideoTileProps = {
   tileIndex?: number
 }
 
-const menuItems = [
-  { id: 'mute', label: 'Mute Mic' },
-  { id: 'cam', label: 'Disable Cam' },
-  { id: 'presenter', label: 'Make Presenter' },
-  { id: 'private', label: 'Private Meeting' },
-  { id: 'exit', label: 'Exit User' },
-] as const
-
 function liveTrack(stream: MediaStream | null | undefined, kind: 'audio' | 'video') {
   return stream?.getTracks().find((t) => t.kind === kind && t.readyState === 'live')
 }
@@ -38,10 +35,46 @@ export function ParticipantVideoTile({ participant, tileIndex = 0 }: Participant
   const localStream = useAppSelector(selectLocalStream)
   const cameraStatus = useAppSelector(selectCameraStatus)
   const openMenuId = useAppSelector(selectOpenParticipantMenuId)
+  const isHost = useIsMeetingHost()
+  const { emitControl, requestKick } = useParticipantModeration()
+  const moderation = useParticipantModerationState(participant.id)
 
   const isLocal = participant.id === localParticipantId
   const menuOpen = openMenuId === participant.id
+  const showHostMenu = isHost && !isLocal && participant.role !== 'host'
   const remoteStream = !isLocal ? remoteStreams[participant.id] : undefined
+
+  const menuItems = useMemo(() => {
+    const items: { id: string; label: string; action: () => void }[] = [
+      {
+        id: 'mic',
+        label: moderation.micAllowed ? 'Mute Mic' : 'Unmute Mic',
+        action: () =>
+          emitControl(participant.id, moderation.micAllowed ? 'mute_mic' : 'unmute_mic'),
+      },
+      {
+        id: 'cam',
+        label: moderation.camAllowed ? 'Disable Cam' : 'Enable Cam',
+        action: () =>
+          emitControl(participant.id, moderation.camAllowed ? 'disable_cam' : 'enable_cam'),
+      },
+      {
+        id: 'presenter',
+        label: moderation.isPresenter ? 'Remove Presenter' : 'Make Presenter',
+        action: () =>
+          emitControl(
+            participant.id,
+            moderation.isPresenter ? 'revoke_presenter' : 'make_presenter',
+          ),
+      },
+      {
+        id: 'exit',
+        label: 'Exit User',
+        action: () => requestKick(participant.id, participant.name),
+      },
+    ]
+    return items
+  }, [emitControl, moderation, participant.id, participant.name, requestKick])
 
   const rootRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -70,10 +103,15 @@ export function ParticipantVideoTile({ participant, tileIndex = 0 }: Participant
   const showLocalVideo = meetingLive && isLocal && localVideoLive && cameraStatus === 'ready'
 
   const remoteVideoLive = Boolean(liveTrack(remoteStream, 'video'))
-  const showRemoteVideo = meetingLive && !isLocal && remoteVideoLive
+  const remoteCamPublished = !isLocal && moderation.camAllowed && remoteVideoLive
+  const showRemoteVideo = meetingLive && remoteCamPublished
 
   const remoteAudioOnly =
-    meetingLive && !isLocal && !remoteVideoLive && Boolean(liveTrack(remoteStream, 'audio'))
+    meetingLive &&
+    !isLocal &&
+    !showRemoteVideo &&
+    moderation.micAllowed &&
+    Boolean(liveTrack(remoteStream, 'audio'))
 
   const showVideo = showLocalVideo || showRemoteVideo
   const showCameraIssue = isLocal && (cameraStatus === 'denied' || cameraStatus === 'error')
@@ -152,48 +190,65 @@ export function ParticipantVideoTile({ participant, tileIndex = 0 }: Participant
             </span>
           </div>
         ) : null}
+        {!isLocal && !moderation.micAllowed ? (
+          <span className="video-tile__badge video-tile__badge--muted" title="Microphone muted by host">
+            Mic off
+          </span>
+        ) : null}
+        {!isLocal && !moderation.camAllowed ? (
+          <span className="video-tile__badge video-tile__badge--cam-off" title="Camera disabled by host">
+            Cam off
+          </span>
+        ) : null}
       </div>
 
-      <div className="video-tile__chrome">
-        <button
-          type="button"
-          className="video-tile__more meeting-tooltip meeting-tooltip--bottom"
-          data-tooltip="More"
-          aria-label={`More options for ${participant.name}`}
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          onClick={(e) => {
-            e.stopPropagation()
-            dispatch(toggleParticipantMenu(participant.id))
-          }}
-        >
-          <IconMoreVertical size={16} />
-        </button>
-      </div>
-
-      <div
-        className={`video-tile__menu-dropdown ${menuOpen ? 'video-tile__menu-dropdown--open' : ''}`}
-        role="menu"
-        aria-hidden={!menuOpen}
-      >
-        {menuItems.map((item) => (
+      {showHostMenu ? (
+        <div className="video-tile__chrome">
           <button
-            key={item.id}
             type="button"
-            role="menuitem"
-            className="video-tile__menu-item"
+            className="video-tile__more meeting-tooltip meeting-tooltip--bottom"
+            data-tooltip="More"
+            aria-label={`More options for ${participant.name}`}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
             onClick={(e) => {
               e.stopPropagation()
-              dispatch(closeParticipantMenu())
+              dispatch(toggleParticipantMenu(participant.id))
             }}
           >
-            {item.label}
+            <IconMoreVertical size={16} />
           </button>
-        ))}
-      </div>
+        </div>
+      ) : null}
+
+      {showHostMenu ? (
+        <div
+          className={`video-tile__menu-dropdown ${menuOpen ? 'video-tile__menu-dropdown--open' : ''}`}
+          role="menu"
+          aria-hidden={!menuOpen}
+        >
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="menuitem"
+              className="video-tile__menu-item"
+              onClick={(e) => {
+                e.stopPropagation()
+                item.action()
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="video-tile__footer">
         <span className="video-tile__label">{participant.name}</span>
+        {moderation.isPresenter && participant.role !== 'host' ? (
+          <span className="video-tile__role-badge">Presenter</span>
+        ) : null}
       </div>
     </div>
   )

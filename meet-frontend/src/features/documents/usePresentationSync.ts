@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import { store } from '../../app/store'
 import { selectIsMeetingLive } from '../meeting/meetingLifecycleSlice'
-import { useIsMeetingHost } from '../meeting/useIsMeetingHost'
+import { useMeetingPermissions } from '../participantControls/useMeetingPermissions'
 import { useMeetingSocket } from '../meetingRoom/MeetingSocketProvider'
 import { pushToast } from './notificationsSlice'
 import { setPresentation, selectActivePresentation } from './documentsSlice'
@@ -20,7 +20,7 @@ import { VIDEO_SHARE_CHANNEL } from '../videoShare/videoShareTypes'
 export function usePresentationSync() {
   const dispatch = useAppDispatch()
   const { emitRoomSync } = useMeetingSocket()
-  const isHost = useIsMeetingHost()
+  const { canPresentContent } = useMeetingPermissions()
   const meetingLive = useAppSelector(selectIsMeetingLive)
   const presentationDoc = useAppSelector((s) => s.roomSync.channels[PRESENTATION_CHANNEL])
 
@@ -53,8 +53,8 @@ export function usePresentationSync() {
 
   const loadPresentation = useCallback(
     async (file: RoomFileRecord) => {
-      if (!isHost) {
-        dispatch(pushToast({ message: 'Only the host can share a document.', variant: 'error' }))
+      if (!canPresentContent) {
+        dispatch(pushToast({ message: 'Only the host or a presenter can share a document.', variant: 'error' }))
         return
       }
       if (!meetingLive) {
@@ -102,23 +102,23 @@ export function usePresentationSync() {
         pushToast({ message: 'Document shared with everyone.', variant: 'success', durationMs: 3500 }),
       )
     },
-    [dispatch, emitPresentation, emitRoomSync, isHost, meetingLive, resolvePageCount],
+    [dispatch, emitPresentation, emitRoomSync, canPresentContent, meetingLive, resolvePageCount],
   )
 
   const closePresentation = useCallback(() => {
-    if (!isHost) return
+    if (!canPresentContent) return
     emitPresentation(null)
     dispatch(pushToast({ message: 'Document closed.', variant: 'info', durationMs: 2500 }))
-  }, [dispatch, emitPresentation, isHost])
+  }, [dispatch, emitPresentation, canPresentContent])
 
   const patchPresentation = useCallback(
     (patch: Partial<PresentationSyncPayload>) => {
-      if (!isHost) return
+      if (!canPresentContent) return
       const prev = store.getState().documents.presentation
       if (!prev) return
       emitPresentation({ ...prev, ...patch })
     },
-    [emitPresentation, isHost],
+    [emitPresentation, canPresentContent],
   )
 
   const presentation = useAppSelector(selectActivePresentation)
